@@ -1,1 +1,2 @@
-# Temperature_Controller
+# Temperature Controller
+Based on Espressif Systems Esp32
