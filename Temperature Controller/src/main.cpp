@@ -1,9 +1,20 @@
+/*
+   Project "Temperature Controller"
+   Sources on GitHub: https://github.com/Lagodish/Temperature_Controller
+   By Lagodish Tech, 2021
+*/
+
 #include <Arduino.h>
+#include <pins_define.h>
+#include <core.h>
+#include <gui.h>
 
 void setup() {
-  // put your setup code here, to run once:
+  // Code here, to run once:
+
+
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // Code here, not run!
 }
