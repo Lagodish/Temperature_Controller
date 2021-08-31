@@ -7,10 +7,11 @@ void Storage( void * parameter)
     /*    #1 Get data from flash storage    */
 
     while(1){
-        
-    vTaskDelay(5000/portTICK_PERIOD_MS);
+
+        vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
+
     vTaskDelete( NULL );
 }
 
@@ -22,9 +23,10 @@ void Light( void * parameter)
 
     while(1){
 
-    vTaskDelay(5000/portTICK_PERIOD_MS);
+        vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
+
     vTaskDelete( NULL );
 }
 
@@ -36,9 +38,10 @@ void Compressor( void * parameter)
 
     while(1){
 
-    vTaskDelay(5000/portTICK_PERIOD_MS);
+        vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
+
     vTaskDelete( NULL );
 }
 
@@ -50,9 +53,10 @@ void Ventilator( void * parameter)
 
     while(1){
 
-    vTaskDelay(5000/portTICK_PERIOD_MS);
+        vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
+    
     vTaskDelete( NULL );
 }
 
@@ -64,8 +68,9 @@ void Sensors( void * parameter)
 
     while(1){
 
-    vTaskDelay(5000/portTICK_PERIOD_MS);
+        vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
+
     vTaskDelete( NULL );
 }
