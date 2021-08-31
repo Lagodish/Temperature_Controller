@@ -31,8 +31,8 @@
 // Include the correct display library
 // For a connection via I2C using Wire include
 #include <Wire.h>  // Only needed for Arduino 1.6.5 and earlier
-#include "SSD1306Wire.h" // legacy include: `#include "SSD1306.h"`
-// or #include "SH1106Wire.h", legacy include: `#include "SH1106.h"`
+//#include "SSD1306Wire.h" // legacy include: `#include "SSD1306.h"`
+#include "SH1106Wire.h"//, legacy include: `#include "SH1106.h"`
 // For a connection via I2C using brzo_i2c (must be installed) include
 // #include <brzo_i2c.h> // Only needed for Arduino 1.6.5 and earlier
 // #include "SSD1306Brzo.h"
@@ -69,8 +69,8 @@
 // SH1106Brzo  display(0x3c, D3, D5);
 
 // Initialize the OLED display using Wire library
-SSD1306Wire display(0x3c, SDA, SCL);  // ADDRESS, SDA, SCL  -  SDA and SCL usually populate automatically based on your board's pins_arduino.h e.g. https://github.com/esp8266/Arduino/blob/master/variants/nodemcu/pins_arduino.h
-// SH1106Wire display(0x3c, SDA, SCL);
+//SSD1306Wire display(0x3c, SDA, SCL);  // ADDRESS, SDA, SCL  -  SDA and SCL usually populate automatically based on your board's pins_arduino.h e.g. https://github.com/esp8266/Arduino/blob/master/variants/nodemcu/pins_arduino.h
+ SH1106Wire display(0x3c, 21, 22);
 
 OLEDDisplayUi ui     ( &display );
 
@@ -147,11 +147,11 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
   Serial.println();
-
+  //Wire.begin(21,22);
   // The ESP is capable of rendering 60fps in 80Mhz mode
   // but that won't give you much time for anything else
   // run it in 160Mhz mode or just set it to 30 fps
-  ui.setTargetFPS(60);
+  ui.setTargetFPS(30);
 
   // Customize the active and inactive symbol
   ui.setActiveSymbol(activeSymbol);

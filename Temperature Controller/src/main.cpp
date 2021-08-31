@@ -8,7 +8,7 @@
 #include <pins_define.h>
 #include <core.h>
 #include <gui.h>
-
+/*
 void setup() {
   // Code here, to run once:
   Serial.begin(9600); //UART setup
@@ -26,3 +26,4 @@ void setup() {
 void loop() {
   // Code here, not run!
 }
+*/
