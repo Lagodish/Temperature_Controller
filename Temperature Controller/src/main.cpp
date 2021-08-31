@@ -5,13 +5,13 @@
 */
 
 #include <Arduino.h>
-#include <pins_define.h>
 #include <core.h>
 #include <gui.h>
-/*
+#include <server.h>
+
 void setup() {
   // Code here, to run once:
-  Serial.begin(9600); //UART setup
+  Serial.begin(115200); //UART setup
   while(!Serial);
 
   xTaskCreate(Storage, "Storage", 5000, NULL, 1, NULL);
@@ -20,10 +20,10 @@ void setup() {
   xTaskCreate(Ventilator, "Ventilator", 5000, NULL, 1, NULL);
   xTaskCreate(Sensors, "Sensors", 5000, NULL, 1, NULL);
   xTaskCreate(GUI, "GUI", 5000, NULL, 1, NULL);
+  xTaskCreate(WebServer, "WebServer", 5000, NULL, 1, NULL);
 
 }
 
 void loop() {
   // Code here, not run!
 }
-*/

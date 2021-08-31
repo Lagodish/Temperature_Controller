@@ -1,7 +1,7 @@
 //Pins Config for my dev board (VineBox)
 #define R 16  
 #define G 5  //	outputs PWM signal at boot 
-#define B 17
+#define Bl 17
 #define W 18
 #define F1 33
 #define F2 27   // ADC2 !
@@ -47,3 +47,9 @@
     So, if you’re using Wi-Fi and you’re having trouble getting the value from an ADC2 GPIO, you may consider using an ADC1 GPIO instead.
     That should solve your problem.
 */
+
+//Light
+    uint8_t briR = 0;
+    uint8_t briG = 0;
+    uint8_t briB = 0;
+    uint8_t briW = 0;

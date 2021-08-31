@@ -1,16 +1,6 @@
-#include <Arduino.h>
+#ifndef GUI_H /* include guards */
+#define GUI_H
 
-void GUI( void * parameter)
-{
-    Serial.println("GUI");
+void GUI( void * parameter);
 
-    /*    #1 GUI oled control       #2 Buttons control    */
-
-    while(1){
-
-        vTaskDelay(5000/portTICK_PERIOD_MS);
-
-    }
-    
-    vTaskDelete( NULL );
-}
+#endif
