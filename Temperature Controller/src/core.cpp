@@ -9,6 +9,7 @@ float TargetTemp = 0.0f;
 bool FanFlag = false;
 bool RelayFlag = false;
 bool CompressorFlag = false;
+uint8_t contrast = 100;
 
 extern uint8_t R_brightness;
 extern uint8_t G_brightness;
@@ -65,6 +66,7 @@ void Light( void * parameter)
         ledcWrite(2, G_brightness);
         ledcWrite(3, B_brightness);
         ledcWrite(4, W_brightness);
+        
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }

@@ -18,7 +18,7 @@ extern bool FanFlag;
 extern bool RelayFlag;
 extern bool CompressorFlag;
 extern float TargetTemp;
- 
+extern uint8_t contrast;
 
 uint8_t R_brightness = 0;
 uint8_t G_brightness = 0;
@@ -38,6 +38,12 @@ int millisLabelId=0;
 int SwitchIdF=0;
 int SwitchIdC=0;
 int SwitchIdR=0;
+int SliderIdR=0;
+int SliderIdG=0;
+int SliderIdB=0;
+int SliderIdW=0;
+int SliderIdBrt=0;
+int SliderIdTempTarg=0;
 
 void numberCall(Control *sender, int type) {
   TargetTemp = sender->value.toInt();
@@ -54,27 +60,14 @@ void textCall(Control *sender, int type) {
 void slider(Control *sender, int type) {
 
   int sliderValue = sender->value.toInt();
+  int id = int(sender->id);
 
   if((sliderValue>=0)&&(sliderValue<=255)){
-
-    switch (sender->id) {
-      case 6:
-        Serial.println("Red brightness");
-        R_brightness = sliderValue;
-        break;
-      case 12:
-        Serial.println("Green brightness");
-        G_brightness = sliderValue;
-        break;
-      case 9:
-        Serial.println("Blue brightness");
-        B_brightness = sliderValue;
-        break;
-      case 15:
-        Serial.println("White brightness");
-        W_brightness = sliderValue;
-        break;
-      }
+    if(id==SliderIdR){Serial.println("Red brightness"); R_brightness = sliderValue;}
+    if(id==SliderIdG){Serial.println("Green brightness"); G_brightness = sliderValue;}
+    if(id==SliderIdB){Serial.println("Blue brightness"); B_brightness = sliderValue;}
+    if(id==SliderIdW){Serial.println("White brightness"); W_brightness = sliderValue;}
+    if((id==SliderIdBrt)&&(sliderValue<=127)){Serial.println("Display brightness"); contrast = sliderValue;}
     }
   
 
@@ -95,55 +88,26 @@ void buttonCallback(Control *sender, int type) {
 }
 
 
-void switcherF(Control *sender, int value) {
+void switcher(Control *sender, int value) {
+  int id = int(sender->id);
   switch (value) {
   case S_ACTIVE:
-    Serial.print("Active: F");
-    FanFlag = true;
+    if(SwitchIdF==id){ Serial.print("Active: F"); FanFlag = true;}
+    if(SwitchIdR==id){ Serial.print("Active: R"); RelayFlag = true;}
+    if(SwitchIdC==id){ Serial.print("Active: C"); CompressorFlag = true;}
+
     break;
 
   case S_INACTIVE:
-    Serial.print("Inactive: F");
-    FanFlag = false;
+    if(SwitchIdF==id){ Serial.print("Inactive: F"); FanFlag = false;}
+    if(SwitchIdR==id){ Serial.print("Inactive: R"); RelayFlag = false;}
+    if(SwitchIdC==id){ Serial.print("Inactive: C"); CompressorFlag = false;}
+
     break;
   }
 
   Serial.print(" ");
-  Serial.println(sender->id);
-}
-//Testing
-void switcherR(Control *sender, int value) {
-  switch (value) {
-  case S_ACTIVE:
-    Serial.print("Active: R");
-    RelayFlag = true;
-    break;
-
-  case S_INACTIVE:
-    Serial.print("Inactive: R");
-    RelayFlag = false;
-    break;
-  }
-
-  Serial.print(" ");
-  Serial.println(sender->id);
-}
-//Testing..
-void switcherC(Control *sender, int value) {
-  switch (value) {
-  case S_ACTIVE:
-    Serial.print("Active: C");
-    CompressorFlag = true; 
-    break;
-
-  case S_INACTIVE:
-    Serial.print("Inactive: C");
-    CompressorFlag = false; 
-    break;
-  }
-
-  Serial.print(" ");
-  Serial.println(sender->id);
+  Serial.println(id);
 }
 
 void WebServer( void * parameter)
@@ -192,15 +156,16 @@ void WebServer( void * parameter)
   //ESPUI.button("Other Button", &buttonExample, ControlColor::Wetasphalt, "Press");
   //ESPUI.padWithCenter("Pad with center", &padExample, ControlColor::Sunflower);
   //ESPUI.pad("Pad without center", &padExample, ControlColor::Carrot);
-  SwitchIdF = ESPUI.switcher("Fan #1", &switcherF, ControlColor::None, FanFlag);
-  SwitchIdR = ESPUI.switcher("Relay #1", &switcherR, ControlColor::None, RelayFlag);
-  SwitchIdC = ESPUI.switcher("Compressor #1", &switcherC, ControlColor::None, CompressorFlag);
-  ESPUI.slider("Red brightness", &slider, ControlColor::None, R_brightness,0,255);
-  ESPUI.slider("Blue brightness", &slider, ControlColor::None, B_brightness,0,255);
-  ESPUI.slider("Green brightness", &slider, ControlColor::None, G_brightness,0,255);
-  ESPUI.slider("White brightness", &slider, ControlColor::None, W_brightness,0,255);
+  SwitchIdF = ESPUI.switcher("Fan #1", &switcher, ControlColor::None, FanFlag);
+  SwitchIdR = ESPUI.switcher("Relay #1", &switcher, ControlColor::None, RelayFlag);
+  SwitchIdC = ESPUI.switcher("Compressor #1", &switcher, ControlColor::None, CompressorFlag);
+  SliderIdR = ESPUI.slider("Red brightness", &slider, ControlColor::None, R_brightness,0,255);
+  SliderIdG = ESPUI.slider("Blue brightness", &slider, ControlColor::None, B_brightness,0,255);
+  SliderIdB = ESPUI.slider("Green brightness", &slider, ControlColor::None, G_brightness,0,255);
+  SliderIdW = ESPUI.slider("White brightness", &slider, ControlColor::None, W_brightness,0,255);
+  SliderIdBrt = ESPUI.slider("Display brightness", &slider, ControlColor::None, contrast,40,127);
   //ESPUI.text("Controller Name:", &textCall, ControlColor::Alizarin, "Bear Boy");
-  ESPUI.number("Target Temperature", &numberCall, ControlColor::Alizarin, int(TargetTemp) , 0, 30);
+  SliderIdTempTarg = ESPUI.number("Target Temperature", &numberCall, ControlColor::Alizarin, int(TargetTemp) , 0, 30);
 
   graphId = ESPUI.graph("Graph Temperature", ControlColor::Wetasphalt);
 

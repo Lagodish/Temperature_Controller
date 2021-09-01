@@ -9,6 +9,7 @@
 #include "font.h"
 
 extern float tempC;
+extern uint8_t contrast;
 
 // Initialize the OLED display using Wire library
 SH1106Wire display(0x3c, 21, 22, GEOMETRY_128_64, I2C_ONE, 400000); //set I2C frequency to 400kHz
@@ -17,9 +18,9 @@ SH1106Wire display(0x3c, 21, 22, GEOMETRY_128_64, I2C_ONE, 400000); //set I2C fr
 OLEDDisplayUi ui     ( &display );
 
 void msOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
-  display->setTextAlignment(TEXT_ALIGN_RIGHT);
+  display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
-  display->drawString(128, 0, String(float(millis())/(60 * 60 * 1000))+" h");
+  display->drawString(0, 0, "UpTime: "+String(float(millis())/(60 * 60 * 1000))+" h");
 }
 
 void drawFrame1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
@@ -31,22 +32,23 @@ void drawFrame1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int1
 }
 
 void drawFrame2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-  // Demonstrates the 3 included default sizes. The fonts come from SSD1306Fonts.h file
-  // Besides the default fonts there will be a program to convert TrueType fonts into this format
-  display->setTextAlignment(TEXT_ALIGN_LEFT);
   //display->setFont(DSEG14_Classic_Regular_15);
   //display->drawString(0 + x, 10 + y, "Arial 10");
 
   int IntegerPart = (int)(tempC);
   int DecimalPart = 10 * (tempC - IntegerPart);
 
-  display->setFont(DSEG14_Classic_Regular_30);
-  display->drawString(10 + x, 10 + y, String(IntegerPart));
+  display->setTextAlignment(TEXT_ALIGN_RIGHT);
+  display->setFont(DSEG7_Classic_Regular_50);
+  display->drawString(80 + x, 10 + y, String(IntegerPart));
 
+  display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(DSEG14_Classic_Regular_10);
-  display->drawString(65 + x, 30 + y, "°C"); 
-  display->setFont(DSEG14_Classic_Regular_15);
-  display->drawString(65 + x, 10 + y, String(DecimalPart));
+  display->drawString(85 + x, 50 + y, "C"); 
+  display->drawCircle(81 + x, 49 + y, 2);
+
+  display->setFont(DSEG7_Classic_Regular_15);
+  display->drawString(80 + x, 15 + y, String(DecimalPart));
   // display->setFont(ArialMT_Plain_24);
   // display->drawString(0 + x, 34 + y, "Arial 24");
 }
@@ -69,26 +71,16 @@ void drawFrame3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int1
 }
 
 void drawFrame4(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-  // Demo for drawStringMaxWidth:
-  // with the third parameter you can define the width after which words will be wrapped.
-  // Currently only spaces and "-" are allowed for wrapping
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
   display->drawStringMaxWidth(0 + x, 10 + y, 128, "Lorem ipsum\n dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore.");
 }
 
-void drawFrame5(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-
-}
-
 // This array keeps function pointers to all frames
 // frames are the single views that slide in
-FrameCallback frames[] = { drawFrame1, drawFrame2, drawFrame3};
+FrameCallback frames[] = { drawFrame2, drawFrame3, drawFrame1};
 
-// how many frames are there?
 int frameCount = 3;
-
-// Overlays are statically drawn on top of a frame eg. a clock
 OverlayCallback overlays[] = { msOverlay };
 int overlaysCount = 1;
 
@@ -98,46 +90,24 @@ void GUI( void * parameter)
 
     /*    #1 GUI oled control       #2 Buttons control    */
   
-    // The ESP is capable of rendering 60fps in 80Mhz mode
-  // but that won't give you much time for anything else
-  // run it in 160Mhz mode or just set it to 30 fps
-  ui.setTargetFPS(30);
+    ui.setTargetFPS(30);
 
-  // Customize the active and inactive symbol
-  ui.setActiveSymbol(activeSymbol);
-  ui.setInactiveSymbol(inactiveSymbol);
+    ui.disableAutoTransition();
+    ui.disableAllIndicators();
 
-  // You can change this to
-  // TOP, LEFT, BOTTOM, RIGHT
-  ui.setIndicatorPosition(BOTTOM);
+    ui.setFrames(frames, frameCount);
+    ui.setOverlays(overlays, overlaysCount);
+    
+    ui.init();
+    //display.flipScreenVertically();
 
-  // Defines where the first frame is located in the bar.
-  ui.setIndicatorDirection(LEFT_RIGHT);
+    int remainingTimeBudget = 0;
+    uint8_t oldData = 0;
 
-  // You can change the transition that is used
-  // SLIDE_LEFT, SLIDE_RIGHT, SLIDE_UP, SLIDE_DOWN
-  ui.setFrameAnimation(SLIDE_LEFT);
-
-  // Add frames
-  ui.setFrames(frames, frameCount);
-
-  // Add overlays
-  ui.setOverlays(overlays, overlaysCount);
-
-  // Initialising the UI will init the display too.
-  ui.init();
-
-  display.flipScreenVertically();
-
-    while(1){
-        int remainingTimeBudget = ui.update();
-        if (remainingTimeBudget > 0) {
-            // You can do some work here
-            // Don't do stuff if you are below your
-            // time budget.
-            //delay(remainingTimeBudget);
-            vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); 
-        }
+    while(1){        
+        remainingTimeBudget = ui.update();
+        if (remainingTimeBudget > 0){  vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); 
+        if(oldData!=contrast){oldData=contrast; display.setContrast(contrast,map(contrast,0,127,5,245),map(contrast,0,127,0,64) );}}
     }
     
     vTaskDelete( NULL );
