@@ -1,4 +1,4 @@
-Do not repeat this PCB project! There are a lot of errors in port configuration and tracing. Needs some work! In the process of creating a new PCB.
+#Do not repeat this PCB project! There are a lot of errors in port configuration and tracing. Needs some work! In the process of creating a new PCB.
             
 How to use：
 
