@@ -1,5 +1,19 @@
 #include <Arduino.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 #include <pins_define.h>
+
+// Globals
+static SemaphoreHandle_t mutex;
+float tempC = 0.0f;
+
+OneWire oneWire(DS18B20);
+DallasTemperature sensors(&oneWire);
+int numberOfDevices;
+DeviceAddress tempDeviceAddress; 
+
+// function to print a device address
+void printAddress(DeviceAddress deviceAddress);
 
 void Storage( void * parameter)
 {
@@ -83,11 +97,60 @@ void Sensors( void * parameter)
 
     /*    #1 Open door switch get data    #2 Temp sersor(s) ds18b20 get data    */
 
-    while(1){
+    sensors.begin();
+    // Grab a count of devices on the wire
+    numberOfDevices = sensors.getDeviceCount()+1;
+    
+    // locate devices on the bus
+    Serial.print("Locating devices...");
+    Serial.print("Found ");
+    Serial.print(numberOfDevices, DEC);
+    Serial.println(" devices.");
 
-        vTaskDelay(5000/portTICK_PERIOD_MS);
+    // Loop through each device, print out address
+    for(int i=0;i<numberOfDevices; i++){
+        // Search the wire for address
+        if(sensors.getAddress(tempDeviceAddress, i)){
+        Serial.print("Found device ");
+        Serial.print(i, DEC);
+        Serial.print(" with address: ");
+        printAddress(tempDeviceAddress);
+        Serial.println();
+        } else {
+        Serial.print("Found ghost device at ");
+        Serial.print(i, DEC);
+        Serial.print(" but could not detect address. Check power and cabling");
+        }
+    }
+
+    while(1){
+          sensors.requestTemperatures(); // Send the command to get temperatures
+  
+        // Loop through each device, print out temperature data
+        for(int i=0;i<numberOfDevices; i++){
+            // Search the wire for address
+            if(sensors.getAddress(tempDeviceAddress, i)){
+            // Output the device ID
+            Serial.print("Temperature for device: ");
+            Serial.println(i,DEC);
+            // Print the data
+            tempC = sensors.getTempC(tempDeviceAddress);
+            Serial.print("Temp C: ");
+            Serial.print(tempC);
+            Serial.print(" Temp F: ");
+            Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
+            }
+        }
+        vTaskDelay(10000/portTICK_PERIOD_MS);
 
     }
 
     vTaskDelete( NULL );
+}
+
+void printAddress(DeviceAddress deviceAddress) {
+  for (uint8_t i = 0; i < 8; i++){
+    if (deviceAddress[i] < 16) Serial.print("0");
+      Serial.print(deviceAddress[i], HEX);
+  }
 }

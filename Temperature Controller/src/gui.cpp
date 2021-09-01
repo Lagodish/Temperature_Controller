@@ -1,13 +1,18 @@
-#include <Arduino.h>
+#include <Arduino.h> 
+//#include "SSD1306Wire.h"
 #include "SH1106Wire.h"
 // Include the UI lib
 #include "OLEDDisplayUi.h"
 
 // Include custom images
 #include "images.h"
+#include "font.h"
+
+extern float tempC;
 
 // Initialize the OLED display using Wire library
-SH1106Wire display(0x3c, 21, 22);
+SH1106Wire display(0x3c, 21, 22, GEOMETRY_128_64, I2C_ONE, 700000); //set I2C frequency to 400kHz
+//SH1106Wire display(0x3c, 21, 22);
 
 OLEDDisplayUi ui     ( &display );
 
@@ -29,14 +34,21 @@ void drawFrame2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int1
   // Demonstrates the 3 included default sizes. The fonts come from SSD1306Fonts.h file
   // Besides the default fonts there will be a program to convert TrueType fonts into this format
   display->setTextAlignment(TEXT_ALIGN_LEFT);
-  display->setFont(ArialMT_Plain_10);
-  display->drawString(0 + x, 10 + y, "Arial 10");
+  //display->setFont(DSEG14_Classic_Regular_15);
+  //display->drawString(0 + x, 10 + y, "Arial 10");
 
-  display->setFont(ArialMT_Plain_16);
-  display->drawString(0 + x, 20 + y, "Arial 16");
+  int IntegerPart = (int)(tempC);
+  int DecimalPart = 10 * (tempC - IntegerPart);
 
-  display->setFont(ArialMT_Plain_24);
-  display->drawString(0 + x, 34 + y, "Arial 24");
+  display->setFont(DSEG14_Classic_Regular_30);
+  display->drawString(10 + x, 10 + y, String(IntegerPart));
+
+  display->setFont(DSEG14_Classic_Regular_10);
+  display->drawString(65 + x, 30 + y, "°C"); 
+  display->setFont(DSEG14_Classic_Regular_15);
+  display->drawString(65 + x, 10 + y, String(DecimalPart));
+  // display->setFont(ArialMT_Plain_24);
+  // display->drawString(0 + x, 34 + y, "Arial 24");
 }
 
 void drawFrame3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
@@ -71,10 +83,10 @@ void drawFrame5(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int1
 
 // This array keeps function pointers to all frames
 // frames are the single views that slide in
-FrameCallback frames[] = { drawFrame1, drawFrame2, drawFrame3, drawFrame4, drawFrame5 };
+FrameCallback frames[] = { drawFrame1, drawFrame2, drawFrame3};
 
 // how many frames are there?
-int frameCount = 5;
+int frameCount = 3;
 
 // Overlays are statically drawn on top of a frame eg. a clock
 OverlayCallback overlays[] = { msOverlay };
@@ -85,11 +97,11 @@ void GUI( void * parameter)
     Serial.println("GUI");
 
     /*    #1 GUI oled control       #2 Buttons control    */
-
+  
     // The ESP is capable of rendering 60fps in 80Mhz mode
   // but that won't give you much time for anything else
   // run it in 160Mhz mode or just set it to 30 fps
-  ui.setTargetFPS(30);
+  ui.setTargetFPS(60);
 
   // Customize the active and inactive symbol
   ui.setActiveSymbol(activeSymbol);

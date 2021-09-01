@@ -13,6 +13,8 @@ DNSServer dnsServer;
 #include <ESP8266WiFi.h>
 #endif
 
+extern float tempC;
+
 const char *ssid = "Controller";
 const char *password = "12345678";
 
@@ -165,10 +167,6 @@ void WebServer( void * parameter)
   WiFi.hostname(hostname);
 #endif
 
-  // try to connect to existing network
-
-  
- 
     // not connected -> create hotspot
     if (WiFi.status() != WL_CONNECTED) {
       Serial.print("\n\nCreating hotspot");
@@ -230,17 +228,17 @@ void WebServer( void * parameter)
 
   ESPUI.begin("Temperature Controller","admin","admin");
     
-    //static bool testSwitchState = false;
+    static bool testSwitchState = false;
 
     while(1){
 
         dnsServer.processNextRequest();
         
         ESPUI.print(millisLabelId, String(millis()));
-        //ESPUI.addGraphPoint(graphId, random(1, 50));
-        //testSwitchState = !testSwitchState;
-        //ESPUI.updateSwitcher(testSwitchId, testSwitchState);
-        vTaskDelay(5000/portTICK_PERIOD_MS);
+        ESPUI.addGraphPoint(graphId, tempC);
+        testSwitchState = !testSwitchState;
+        ESPUI.updateSwitcher(testSwitchId, testSwitchState);
+        vTaskDelay(10000/portTICK_PERIOD_MS);
 
     }
     
