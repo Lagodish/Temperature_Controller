@@ -11,7 +11,7 @@
 extern float tempC;
 
 // Initialize the OLED display using Wire library
-SH1106Wire display(0x3c, 21, 22, GEOMETRY_128_64, I2C_ONE, 700000); //set I2C frequency to 400kHz
+SH1106Wire display(0x3c, 21, 22, GEOMETRY_128_64, I2C_ONE, 400000); //set I2C frequency to 400kHz
 //SH1106Wire display(0x3c, 21, 22);
 
 OLEDDisplayUi ui     ( &display );
@@ -101,7 +101,7 @@ void GUI( void * parameter)
     // The ESP is capable of rendering 60fps in 80Mhz mode
   // but that won't give you much time for anything else
   // run it in 160Mhz mode or just set it to 30 fps
-  ui.setTargetFPS(60);
+  ui.setTargetFPS(30);
 
   // Customize the active and inactive symbol
   ui.setActiveSymbol(activeSymbol);

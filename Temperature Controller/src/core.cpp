@@ -5,6 +5,10 @@
 
 // Globals
 float tempC = 0.0f;
+float TargetTemp = 0.0f;
+bool FanFlag = false;
+bool RelayFlag = false;
+bool CompressorFlag = false;
 
 extern uint8_t R_brightness;
 extern uint8_t G_brightness;
@@ -73,8 +77,12 @@ void Compressor( void * parameter)
     Serial.println("Compressor task start!");
     
     /*    #1 Compressor freq. on/off control    */
-
+    pinMode (Comp, OUTPUT);
     while(1){
+        if(TargetTemp<tempC) CompressorFlag = true;
+        else CompressorFlag = false;
+        
+        digitalWrite(Comp, CompressorFlag);
 
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
@@ -89,7 +97,15 @@ void Ventilator( void * parameter)
 
     /*    #1 Ventilator(s) speed(?) or on/off control    */
 
+    pinMode (F1, OUTPUT);
+    pinMode (Relay, OUTPUT);
     while(1){
+        
+        //TODO if(defreze)
+        digitalWrite(F1, FanFlag);
+
+        //Relay controll
+        digitalWrite(Relay, RelayFlag);
 
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
@@ -151,7 +167,7 @@ void Sensors( void * parameter)
             Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
             }
         }
-        vTaskDelay(10000/portTICK_PERIOD_MS);
+        vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
 

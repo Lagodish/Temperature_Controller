@@ -14,6 +14,12 @@ DNSServer dnsServer;
 #endif
 
 extern float tempC;
+extern bool FanFlag;
+extern bool RelayFlag;
+extern bool CompressorFlag;
+extern float TargetTemp;
+ 
+
 uint8_t R_brightness = 0;
 uint8_t G_brightness = 0;
 uint8_t B_brightness = 0;
@@ -26,12 +32,17 @@ const char *hostname = "controller";
 
 //    !!!! http://controller.local/  !!!!!
  
-int statusLabelId;
-int graphId;
-int millisLabelId;
-int testSwitchId;
+int statusLabelId=0;
+int graphId=0;
+int millisLabelId=0;
+int SwitchIdF=0;
+int SwitchIdC=0;
+int SwitchIdR=0;
 
-void numberCall(Control *sender, int type) { Serial.println(sender->value); }
+void numberCall(Control *sender, int type) {
+  TargetTemp = sender->value.toInt();
+  Serial.print("Target Temp Value: ");
+   Serial.println(sender->value); }
 
 void textCall(Control *sender, int type) {
   Serial.print("Text: ID: ");
@@ -83,89 +94,51 @@ void buttonCallback(Control *sender, int type) {
   }
 }
 
-void buttonExample(Control *sender, int type) {
-  switch (type) {
-  case B_DOWN:
-    Serial.println("Status: Start");
-    ESPUI.print(statusLabelId, "Start");
-    break;
 
-  case B_UP:
-    Serial.println("Status: Stop");
-    ESPUI.print(statusLabelId, "Stop");
-    break;
-  }
-}
-void padExample(Control *sender, int value) {
+void switcherF(Control *sender, int value) {
   switch (value) {
-  case P_LEFT_DOWN:
-    Serial.print("left down");
+  case S_ACTIVE:
+    Serial.print("Active: F");
+    FanFlag = true;
     break;
 
-  case P_LEFT_UP:
-    Serial.print("left up");
-    break;
-
-  case P_RIGHT_DOWN:
-    Serial.print("right down");
-    break;
-
-  case P_RIGHT_UP:
-    Serial.print("right up");
-    break;
-
-  case P_FOR_DOWN:
-    Serial.print("for down");
-    break;
-
-  case P_FOR_UP:
-    Serial.print("for up");
-    break;
-
-  case P_BACK_DOWN:
-    Serial.print("back down");
-    break;
-
-  case P_BACK_UP:
-    Serial.print("back up");
-    break;
-
-  case P_CENTER_DOWN:
-    Serial.print("center down");
-    break;
-
-  case P_CENTER_UP:
-    Serial.print("center up");
+  case S_INACTIVE:
+    Serial.print("Inactive: F");
+    FanFlag = false;
     break;
   }
 
   Serial.print(" ");
   Serial.println(sender->id);
 }
-
-void switchExample(Control *sender, int value) {
+//Testing
+void switcherR(Control *sender, int value) {
   switch (value) {
   case S_ACTIVE:
-    Serial.print("Active:");
+    Serial.print("Active: R");
+    RelayFlag = true;
     break;
 
   case S_INACTIVE:
-    Serial.print("Inactive");
+    Serial.print("Inactive: R");
+    RelayFlag = false;
     break;
   }
 
   Serial.print(" ");
   Serial.println(sender->id);
 }
-
-void otherSwitchExample(Control *sender, int value) {
+//Testing..
+void switcherC(Control *sender, int value) {
   switch (value) {
   case S_ACTIVE:
-    Serial.print("Active:");
+    Serial.print("Active: C");
+    CompressorFlag = true; 
     break;
 
   case S_INACTIVE:
-    Serial.print("Inactive");
+    Serial.print("Inactive: C");
+    CompressorFlag = false; 
     break;
   }
 
@@ -214,21 +187,22 @@ void WebServer( void * parameter)
   Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
 
   statusLabelId = ESPUI.label("Status:", ControlColor::Turquoise, "Stop");
-  millisLabelId = ESPUI.label("Millis:", ControlColor::Emerald, "0");
-  ESPUI.button("Push Button", &buttonCallback, ControlColor::Peterriver, "Press");
-  ESPUI.button("Other Button", &buttonExample, ControlColor::Wetasphalt, "Press");
+  millisLabelId = ESPUI.label("UpTime:", ControlColor::Emerald, "0");
+  //ESPUI.button("Push Button", &buttonCallback, ControlColor::Peterriver, "Press");
+  //ESPUI.button("Other Button", &buttonExample, ControlColor::Wetasphalt, "Press");
   //ESPUI.padWithCenter("Pad with center", &padExample, ControlColor::Sunflower);
   //ESPUI.pad("Pad without center", &padExample, ControlColor::Carrot);
-  testSwitchId = ESPUI.switcher("Switch one", &switchExample, ControlColor::Alizarin, false);
-  ESPUI.switcher("Switch two", &otherSwitchExample, ControlColor::None, true);
-  ESPUI.slider("Red brightness", &slider, ControlColor::None, 100,0,255);
-  ESPUI.slider("Blue brightness", &slider, ControlColor::None, 100,0,255);
-  ESPUI.slider("Green brightness", &slider, ControlColor::None, 100,0,255);
-  ESPUI.slider("White brightness", &slider, ControlColor::None, 100,0,255);
+  SwitchIdF = ESPUI.switcher("Fan #1", &switcherF, ControlColor::None, FanFlag);
+  SwitchIdR = ESPUI.switcher("Relay #1", &switcherR, ControlColor::None, RelayFlag);
+  SwitchIdC = ESPUI.switcher("Compressor #1", &switcherC, ControlColor::None, CompressorFlag);
+  ESPUI.slider("Red brightness", &slider, ControlColor::None, R_brightness,0,255);
+  ESPUI.slider("Blue brightness", &slider, ControlColor::None, B_brightness,0,255);
+  ESPUI.slider("Green brightness", &slider, ControlColor::None, G_brightness,0,255);
+  ESPUI.slider("White brightness", &slider, ControlColor::None, W_brightness,0,255);
   //ESPUI.text("Controller Name:", &textCall, ControlColor::Alizarin, "Bear Boy");
-  //ESPUI.number("Numbertest", &numberCall, ControlColor::Alizarin, 5, 0, 10);
+  ESPUI.number("Target Temperature", &numberCall, ControlColor::Alizarin, int(TargetTemp) , 0, 30);
 
-  graphId = ESPUI.graph("Graph Test", ControlColor::Wetasphalt);
+  graphId = ESPUI.graph("Graph Temperature", ControlColor::Wetasphalt);
 
   /*
    * .begin loads and serves all files from PROGMEM directly.
@@ -250,17 +224,25 @@ void WebServer( void * parameter)
 
   ESPUI.begin("Temperature Controller","admin","admin");
     
-    static bool testSwitchState = false;
+   // static bool testSwitchState = false;
 
     while(1){
 
         dnsServer.processNextRequest();
+        if(CompressorFlag||FanFlag||RelayFlag){
+          Serial.println("Status: Work");
+          ESPUI.print(statusLabelId, "Work");}
+        else{
+          ESPUI.print(statusLabelId, "Stop");
+          Serial.println("Status: Stop");}
         
-        ESPUI.print(millisLabelId, String(millis()));
-        ESPUI.addGraphPoint(graphId, tempC);
-        testSwitchState = !testSwitchState;
-        ESPUI.updateSwitcher(testSwitchId, testSwitchState);
-        vTaskDelay(10000/portTICK_PERIOD_MS);
+        ESPUI.print(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
+        ESPUI.updateSwitcher(SwitchIdF, FanFlag);
+        ESPUI.updateSwitcher(SwitchIdR, RelayFlag);
+        ESPUI.updateSwitcher(SwitchIdC, CompressorFlag);
+        ESPUI.addGraphPoint(graphId, round(tempC));
+
+        vTaskDelay(7000/portTICK_PERIOD_MS);
 
     }
     
