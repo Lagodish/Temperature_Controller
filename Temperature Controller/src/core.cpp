@@ -5,10 +5,11 @@
 
 // Globals
 float tempC = 0.0f;
-uint8_t R_brightness = 0;
-uint8_t G_brightness = 0;
-uint8_t B_brightness = 0;
-uint8_t W_brightness = 0;
+
+extern uint8_t R_brightness;
+extern uint8_t G_brightness;
+extern uint8_t B_brightness;
+extern uint8_t W_brightness;
 
 OneWire oneWire(DS18B20);
 DallasTemperature sensors(&oneWire);

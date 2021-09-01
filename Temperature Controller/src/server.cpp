@@ -14,10 +14,10 @@ DNSServer dnsServer;
 #endif
 
 extern float tempC;
-extern uint8_t R_brightness;
-extern uint8_t G_brightness;
-extern uint8_t B_brightness;
-extern uint8_t W_brightness;
+uint8_t R_brightness = 0;
+uint8_t G_brightness = 0;
+uint8_t B_brightness = 0;
+uint8_t W_brightness = 0;
 
 const char *ssid = "Controller";
 const char *password = "12345678";
@@ -47,19 +47,19 @@ void slider(Control *sender, int type) {
   if((sliderValue>=0)&&(sliderValue<=255)){
 
     switch (sender->id) {
-      case 0:
+      case 6:
         Serial.println("Red brightness");
         R_brightness = sliderValue;
         break;
-      case 1:
+      case 12:
         Serial.println("Green brightness");
         G_brightness = sliderValue;
         break;
-      case 2:
+      case 9:
         Serial.println("Blue brightness");
         B_brightness = sliderValue;
         break;
-      case 3:
+      case 15:
         Serial.println("White brightness");
         W_brightness = sliderValue;
         break;
