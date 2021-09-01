@@ -107,7 +107,7 @@ void GUI( void * parameter)
     while(1){        
         remainingTimeBudget = ui.update();
         if (remainingTimeBudget > 0){  vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); 
-        if(oldData!=contrast){oldData=contrast; display.setContrast(contrast,map(contrast,0,127,5,245),map(contrast,0,127,0,64) );}}
+        if(oldData!=contrast){oldData=contrast; display.setBrightness(contrast);}}
     }
     
     vTaskDelete( NULL );
