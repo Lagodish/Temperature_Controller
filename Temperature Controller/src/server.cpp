@@ -14,6 +14,10 @@ DNSServer dnsServer;
 #endif
 
 extern float tempC;
+extern uint8_t R_brightness;
+extern uint8_t G_brightness;
+extern uint8_t B_brightness;
+extern uint8_t W_brightness;
 
 const char *ssid = "Controller";
 const char *password = "12345678";
@@ -37,18 +41,34 @@ void textCall(Control *sender, int type) {
 }
 
 void slider(Control *sender, int type) {
-  Serial.print("Slider: ID: ");
-  Serial.print(sender->id);
-  Serial.print(", Value: ");
-  Serial.println(sender->value);
-  // Like all Control Values in ESPUI slider values are Strings. To use them as int simply do this:
+
   int sliderValue = sender->value.toInt();
-  ledcWrite(1, sliderValue);
-  ledcWrite(2, sliderValue);
-  ledcWrite(3, sliderValue);
-  ledcWrite(4, sliderValue);
-  Serial.print("SliderValue ");
-  Serial.println(sliderValue);
+
+  if((sliderValue>=0)&&(sliderValue<=255)){
+
+    switch (sender->id) {
+      case 0:
+        Serial.println("Red brightness");
+        R_brightness = sliderValue;
+        break;
+      case 1:
+        Serial.println("Green brightness");
+        G_brightness = sliderValue;
+        break;
+      case 2:
+        Serial.println("Blue brightness");
+        B_brightness = sliderValue;
+        break;
+      case 3:
+        Serial.println("White brightness");
+        W_brightness = sliderValue;
+        break;
+      }
+    }
+  
+
+  Serial.print(", Value: ");
+  Serial.println(sender->value); 
 }
 
 void buttonCallback(Control *sender, int type) {
@@ -197,14 +217,16 @@ void WebServer( void * parameter)
   millisLabelId = ESPUI.label("Millis:", ControlColor::Emerald, "0");
   ESPUI.button("Push Button", &buttonCallback, ControlColor::Peterriver, "Press");
   ESPUI.button("Other Button", &buttonExample, ControlColor::Wetasphalt, "Press");
-  ESPUI.padWithCenter("Pad with center", &padExample, ControlColor::Sunflower);
-  ESPUI.pad("Pad without center", &padExample, ControlColor::Carrot);
+  //ESPUI.padWithCenter("Pad with center", &padExample, ControlColor::Sunflower);
+  //ESPUI.pad("Pad without center", &padExample, ControlColor::Carrot);
   testSwitchId = ESPUI.switcher("Switch one", &switchExample, ControlColor::Alizarin, false);
   ESPUI.switcher("Switch two", &otherSwitchExample, ControlColor::None, true);
-  ESPUI.slider("Slider one", &slider, ControlColor::Alizarin, 30);
-  ESPUI.slider("Slider two", &slider, ControlColor::None, 100,0,255);
-  ESPUI.text("Text Test:", &textCall, ControlColor::Alizarin, "a Text Field");
-  ESPUI.number("Numbertest", &numberCall, ControlColor::Alizarin, 5, 0, 10);
+  ESPUI.slider("Red brightness", &slider, ControlColor::None, 100,0,255);
+  ESPUI.slider("Blue brightness", &slider, ControlColor::None, 100,0,255);
+  ESPUI.slider("Green brightness", &slider, ControlColor::None, 100,0,255);
+  ESPUI.slider("White brightness", &slider, ControlColor::None, 100,0,255);
+  //ESPUI.text("Controller Name:", &textCall, ControlColor::Alizarin, "Bear Boy");
+  //ESPUI.number("Numbertest", &numberCall, ControlColor::Alizarin, 5, 0, 10);
 
   graphId = ESPUI.graph("Graph Test", ControlColor::Wetasphalt);
 

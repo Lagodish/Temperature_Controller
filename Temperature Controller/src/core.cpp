@@ -4,8 +4,11 @@
 #include <pins_define.h>
 
 // Globals
-static SemaphoreHandle_t mutex;
 float tempC = 0.0f;
+uint8_t R_brightness = 0;
+uint8_t G_brightness = 0;
+uint8_t B_brightness = 0;
+uint8_t W_brightness = 0;
 
 OneWire oneWire(DS18B20);
 DallasTemperature sensors(&oneWire);
@@ -53,7 +56,10 @@ void Light( void * parameter)
 
     while(1){
 
-        
+        ledcWrite(1, R_brightness);
+        ledcWrite(2, G_brightness);
+        ledcWrite(3, B_brightness);
+        ledcWrite(4, W_brightness);
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
@@ -134,7 +140,10 @@ void Sensors( void * parameter)
             Serial.print("Temperature for device: ");
             Serial.println(i,DEC);
             // Print the data
-            tempC = sensors.getTempC(tempDeviceAddress);
+            float temp = sensors.getTempC(tempDeviceAddress);
+            if((temp>-50.0f)&&(temp<50.0f)){
+                tempC = temp;
+            }
             Serial.print("Temp C: ");
             Serial.print(tempC);
             Serial.print(" Temp F: ");
