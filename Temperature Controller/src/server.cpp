@@ -163,7 +163,7 @@ void WebServer( void * parameter)
   SliderIdG = ESPUI.slider("Blue brightness", &slider, ControlColor::None, B_brightness,0,255);
   SliderIdB = ESPUI.slider("Green brightness", &slider, ControlColor::None, G_brightness,0,255);
   SliderIdW = ESPUI.slider("White brightness", &slider, ControlColor::None, W_brightness,0,255);
-  SliderIdBrt = ESPUI.slider("Display brightness", &slider, ControlColor::None, contrast,40,127);
+  SliderIdBrt = ESPUI.slider("Display brightness", &slider, ControlColor::None, contrast,50,127);
   //ESPUI.text("Controller Name:", &textCall, ControlColor::Alizarin, "Bear Boy");
   SliderIdTempTarg = ESPUI.number("Target Temperature", &numberCall, ControlColor::Alizarin, int(TargetTemp) , 0, 30);
 
