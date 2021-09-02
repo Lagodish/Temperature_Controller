@@ -227,10 +227,10 @@ void loop(void) {
   static long oldTime = 0;
   static bool testSwitchState = false;
   
-  if (millis() - oldTime > 5000) {
+  if (millis() - oldTime > 500) {
     //ESPUI.print(millisLabelId, String(millis()));
 
-    //ESPUI.addGraphPoint(graphId, random(1, 50));
+    ESPUI.addGraphPoint(graphId, random(1, 50));
 
     //testSwitchState = !testSwitchState;
     //ESPUI.updateSwitcher(testSwitchId, testSwitchState);

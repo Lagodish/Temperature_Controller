@@ -5,11 +5,15 @@
 #include "OLEDDisplayUi.h"
 
 // Include custom images
-#include "images.h"
-#include "font.h"
+#include "GUI/images.h"
+#include "GUI/font.h"
+#include "GUI/iconset.h"
 
 extern float tempC;
 extern uint8_t contrast;
+extern bool FanFlag;
+extern bool RelayFlag;
+extern bool CompressorFlag;
 
 // Initialize the OLED display using Wire library
 SH1106Wire display(0x3c, 21, 22, GEOMETRY_128_64, I2C_ONE, 400000); //set I2C frequency to 400kHz
@@ -20,67 +24,61 @@ OLEDDisplayUi ui     ( &display );
 void msOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
-  display->drawString(0, 0, "UpTime: "+String(float(millis())/(60 * 60 * 1000))+" h");
+  display->drawString(0, 0, "UpTime: "+String(float(millis())/(60 * 60 * 1000))+"h");
+
+  display->setTextAlignment(TEXT_ALIGN_RIGHT);
+  display->setFont(ArialMT_Plain_10);
+  display->drawString(128, 0, "09:36");
+
 }
 
-void drawFrame1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-  // draw an xbm image.
-  // Please note that everything that should be transitioned
-  // needs to be drawn relative to x and y
-
-  display->drawXbm(x + 34, y + 14, WiFi_Logo_width, WiFi_Logo_height, WiFi_Logo_bits);
-}
-
-void drawFrame2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-  //display->setFont(DSEG14_Classic_Regular_15);
-  //display->drawString(0 + x, 10 + y, "Arial 10");
+void MainFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
 
   int IntegerPart = (int)(tempC);
   int DecimalPart = 10 * (tempC - IntegerPart);
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(DSEG7_Classic_Regular_50);
-  display->drawString(80 + x, 10 + y, String(IntegerPart));
+  display->drawString(77 + x, 8 + y, String(IntegerPart));
 
   display->setTextAlignment(TEXT_ALIGN_LEFT);
-  display->setFont(DSEG14_Classic_Regular_10);
-  display->drawString(85 + x, 50 + y, "C"); 
-  display->drawCircle(81 + x, 49 + y, 2);
+  display->setFont(ArialMT_Plain_16);
+  display->drawString(80 + x, 48 + y, "C"); 
+  display->drawCircle(78 + x, 49 + y, 2);
 
   display->setFont(DSEG7_Classic_Regular_15);
-  display->drawString(80 + x, 15 + y, String(DecimalPart));
-  // display->setFont(ArialMT_Plain_24);
-  // display->drawString(0 + x, 34 + y, "Arial 24");
+  display->drawString(77 + x, 15 + y, String(DecimalPart));
+  
+  display->drawIco16x16(97 + x, 14 + y, powerbutton_icon16x16, false); //Power
+  display->drawIco16x16(97 + x, 31 + y, bulb_off_icon16x16, false); //Light   // or bulb_icon16x16
+  display->drawIco16x16(97 + x, 48 + y, humidity_icon16x16, false); //Water  
+
+  
+  display->setTextAlignment(TEXT_ALIGN_RIGHT);
+  display->setFont(ArialMT_Plain_10);
+  //TODO Flag changer! Fix names!
+  display->drawString(128 + x, 16 + y, CompressorFlag ? "On":"Off"); //Power
+  display->drawString(128 + x, 33 + y, RelayFlag ? "On":"Off"); //Light
+  display->drawString(128 + x, 50 + y, FanFlag ? "On":"Off");  //Water
 }
 
-void drawFrame3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+void ExtraFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
   // Text alignment demo
   display->setFont(ArialMT_Plain_10);
-
   // The coordinates define the left starting point of the text
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->drawString(0 + x, 11 + y, "Left aligned (0,10)");
-
   // The coordinates define the center of the text
   display->setTextAlignment(TEXT_ALIGN_CENTER);
   display->drawString(64 + x, 22 + y, "Center aligned (64,22)");
-
   // The coordinates define the right end of the text
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->drawString(128 + x, 33 + y, "Right aligned (128,33)");
 }
 
-void drawFrame4(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-  display->setTextAlignment(TEXT_ALIGN_LEFT);
-  display->setFont(ArialMT_Plain_10);
-  display->drawStringMaxWidth(0 + x, 10 + y, 128, "Lorem ipsum\n dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore.");
-}
+FrameCallback frames[] = {MainFrame, ExtraFrame};
 
-// This array keeps function pointers to all frames
-// frames are the single views that slide in
-FrameCallback frames[] = { drawFrame2, drawFrame3, drawFrame1};
-
-int frameCount = 3;
+int frameCount = 2;
 OverlayCallback overlays[] = { msOverlay };
 int overlaysCount = 1;
 
