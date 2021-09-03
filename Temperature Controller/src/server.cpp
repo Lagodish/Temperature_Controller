@@ -203,6 +203,9 @@ void WebServer( void * parameter)
         ESPUI.addGraphPoint(graphId, int(round(tempC)));
         ESPUI.print(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
 
+      ///! TEST ONLY
+      FanFlag =! FanFlag;
+
       //TODO add
         //update stages
         ESPUI.updateSwitcher(SwitchIdF, FanFlag);
@@ -210,7 +213,7 @@ void WebServer( void * parameter)
         ESPUI.updateSwitcher(SwitchIdC, CompressorFlag);
         
       
-        vTaskDelay(5000/portTICK_PERIOD_MS);
+        vTaskDelay(3000/portTICK_PERIOD_MS);
 
     }
     

@@ -14,6 +14,8 @@ extern uint8_t contrast;
 extern bool FanFlag;
 extern bool RelayFlag;
 extern bool CompressorFlag;
+extern bool LightFlag;
+extern bool LockFlag;
 
 // Initialize the OLED display using Wire library
 SH1106Wire display(0x3c, 21, 22, GEOMETRY_128_64, I2C_ONE, 400000); //set I2C frequency to 400kHz
@@ -49,16 +51,16 @@ void MainFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16
   display->setFont(DSEG7_Classic_Regular_15);
   display->drawString(77 + x, 15 + y, String(DecimalPart));
   
-  display->drawIco16x16(97 + x, 14 + y, powerbutton_icon16x16, false); //Power
-  display->drawIco16x16(97 + x, 31 + y, bulb_off_icon16x16, false); //Light   // or bulb_icon16x16
-  display->drawIco16x16(97 + x, 48 + y, humidity_icon16x16, false); //Water  
+  display->drawIco16x16(97 + x, 14 + y, LockFlag ? lock_open_icon16x16 : lock_closed_icon16x16); //Power powerbutton_icon16x16   || lock_closed_icon16x16 or lock_open_icon16x16 or door_icon16x16 if door is open || warning_icon16x16
+  display->drawIco16x16(97 + x, 31 + y, LightFlag ? bulb_off_icon16x16 : bulb_icon16x16);    //Light    || or bulb_icon16x16
+  display->drawIco16x16(97 + x, 48 + y, FanFlag ? humidity_icon16x16 : humidity2_icon16x16);    //Water    || or humidity2_icon16x16
 
   
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(ArialMT_Plain_10);
   //TODO Flag changer! Fix names!
-  display->drawString(128 + x, 16 + y, CompressorFlag ? "On":"Off"); //Power
-  display->drawString(128 + x, 33 + y, RelayFlag ? "On":"Off"); //Light
+  display->drawString(128 + x, 16 + y, LockFlag ? "On":"Off"); //Lock
+  display->drawString(128 + x, 33 + y, LightFlag ? "On":"Off"); //Light
   display->drawString(128 + x, 50 + y, FanFlag ? "On":"Off");  //Water
 }
 

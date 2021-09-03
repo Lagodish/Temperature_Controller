@@ -9,6 +9,8 @@ float TargetTemp = 0.0f;
 bool FanFlag = false;
 bool RelayFlag = false;
 bool CompressorFlag = false;
+bool LightFlag = false;
+bool LockFlag = false;
 uint8_t contrast = 100;
 
 extern uint8_t R_brightness;
@@ -61,12 +63,18 @@ void Light( void * parameter)
     ledcAttachPin(W, 4);
 
     while(1){
+            //TODO fix IF logic (here is > 0 but needed >= 0)
+        if((R_brightness>0)&&(R_brightness<=255)||(G_brightness>0)&&(G_brightness<=255)||(B_brightness>0)&&(B_brightness<=255)||(W_brightness>0)&&(W_brightness<=255)){
+            LightFlag = true;
+            ledcWrite(1, R_brightness);
+            ledcWrite(2, G_brightness);
+            ledcWrite(3, B_brightness);
+            ledcWrite(4, W_brightness);
+        }    
+        else{
+            LightFlag = false;
+        }
 
-        ledcWrite(1, R_brightness);
-        ledcWrite(2, G_brightness);
-        ledcWrite(3, B_brightness);
-        ledcWrite(4, W_brightness);
-        
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
