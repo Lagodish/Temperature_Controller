@@ -90,7 +90,7 @@ void GUI( void * parameter)
 
     /*    #1 GUI oled control       #2 Buttons control    */
   
-    ui.setTargetFPS(30);
+    ui.setTargetFPS(1);
 
     ui.disableAutoTransition();
     ui.disableAllIndicators();
@@ -98,6 +98,7 @@ void GUI( void * parameter)
     ui.setFrames(frames, frameCount);
     ui.setOverlays(overlays, overlaysCount);
     
+    if(millis()<5000)
     ui.init();
     //display.flipScreenVertically();
 
@@ -109,6 +110,8 @@ void GUI( void * parameter)
     
     while(1){        
         remainingTimeBudget = ui.update();
+        Serial.print("Delay: ");
+        Serial.println(remainingTimeBudget);
         if (remainingTimeBudget > 0){  vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); }
 
     }

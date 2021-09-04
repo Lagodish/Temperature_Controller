@@ -8,6 +8,12 @@
 float tempC = 0.0f;
 
 double TargetTemp = 0.0;
+
+double TempSensor_0 = 0.0;
+double TempSensor_1 = 0.0;
+double TempSensor_2 = 0.0;
+double TempSensor_3 = 0.0;
+double TempSensor_4 = 0.0;
 double CalibTemp_0 = 0.0;
 double CalibTemp_1 = 0.0;
 double CalibTemp_2 = 0.0;
@@ -20,10 +26,13 @@ int MinWorkComp = 0;
 int MinDefreeze = 0;
 
 bool FanFlag = false;
+bool DefreezeFlag = false;
 bool RelayFlag = false;
 bool CompressorFlag = false;
 bool LightFlag = false;
 bool LockFlag = false;
+
+bool Warning = false;
 
 // Extern var.
 extern uint8_t R_brightness;
@@ -143,8 +152,6 @@ void Light( void * parameter)
     const int freq = 10000;
     const uint8_t resolution = 8;
 
-    
-
     ledcSetup(1, freq, resolution);
     ledcSetup(2, freq, resolution);
     ledcSetup(3, freq, resolution);
@@ -159,7 +166,7 @@ void Light( void * parameter)
 
         if((R_brightness==0)&&(G_brightness==0)&&(B_brightness==0)&&(W_brightness==0)){LightFlag = false;}
         else{LightFlag = true;}
-            
+        
         ledcWrite(1, R_brightness);
         ledcWrite(2, G_brightness);
         ledcWrite(3, B_brightness);
@@ -221,14 +228,8 @@ void Sensors( void * parameter)
 
     sensors.begin();
     // Grab a count of devices on the wire
-    numberOfDevices = sensors.getDeviceCount()+1;
+    numberOfDevices = 1 + sensors.getDeviceCount();
     
-    // locate devices on the bus
-    Serial.print("Locating devices...");
-    Serial.print("Found ");
-    Serial.print(numberOfDevices, DEC);
-    Serial.println(" devices.");
-
     // Loop through each device, print out address
     for(int i=0;i<numberOfDevices; i++){
         // Search the wire for address
@@ -252,24 +253,25 @@ void Sensors( void * parameter)
         for(int i=0;i<numberOfDevices; i++){
             // Search the wire for address
             if(sensors.getAddress(tempDeviceAddress, i)){
-            // Output the device ID
-            Serial.print("Temperature for device: ");
-            Serial.println(i,DEC);
-            // Print the data
-            float temp = sensors.getTempC(tempDeviceAddress);
-            if((temp>-50.0f)&&(temp<50.0f)){
-                tempC = temp;
-            }
-            Serial.print("Temp C: ");
-            Serial.print(tempC);
-            Serial.print(" Temp F: ");
-            Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
+                // Output the device ID
+                //Serial.print("Temperature for device: ");
+                //Serial.println(i,DEC);
+                // Print the data
+                double temp = sensors.getTempC(tempDeviceAddress);
+                if((temp>-50.0f)&&(temp<90.0f)){
+                    tempC = temp;
+
+                    if(i==0) TempSensor_0 = temp;
+                    if(i==1) TempSensor_1 = temp;
+                    if(i==2) TempSensor_2 = temp;
+                    if(i==3) TempSensor_3 = temp;
+                    if(i==4) TempSensor_4 = temp;
+                }
+
             }
         }
-        vTaskDelay(5000/portTICK_PERIOD_MS);
-
+    vTaskDelay(5000/portTICK_PERIOD_MS);
     }
-
     vTaskDelete( NULL );
 }
 
