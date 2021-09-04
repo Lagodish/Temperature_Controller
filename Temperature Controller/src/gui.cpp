@@ -21,6 +21,10 @@ extern bool LockFlag;
 extern bool Debug;
 extern bool TenthsFlag;
 extern bool DefreezeFlag;
+extern uint8_t HourNow;
+extern uint8_t MinNow;
+// Extern.
+extern SemaphoreHandle_t i2c_line;
 
 //Var.
 
@@ -36,9 +40,15 @@ void msOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
   display->setFont(ArialMT_Plain_10);
   display->drawString(0, 0, "UpTime: "+String(float(millis())/(60 * 60 * 1000))+"h");
 
+  String Time = "";
+  if(HourNow<10){Time="0"+String(HourNow);}
+  else{Time=String(HourNow);}
+  Time+=":";
+  if(MinNow<10){Time=Time+"0"+String(MinNow);}
+  else{Time+=String(MinNow);}
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(ArialMT_Plain_10);
-  display->drawString(128, 0, "09:36");
+  display->drawString(128, 0, Time);
 
 }
 
@@ -127,7 +137,7 @@ void GUI( void * parameter)
     if(Debug) Serial.println("GUI");
 
     /*    #1 GUI oled control       #2 Buttons control    */
-  
+    xSemaphoreTake(i2c_line, portMAX_DELAY);
     ui.setTargetFPS(1);
 
     ui.disableAutoTransition();
@@ -142,16 +152,17 @@ void GUI( void * parameter)
     //uint8_t oldData = 0;
     //if(oldData!=contrast){oldData=contrast; display.setBrightness(contrast);}
     display.setBrightness(contrast);
-    
+    xSemaphoreGive(i2c_line);
 
     int remainingTimeBudget = 0;
     
-    while(1){        
+    while(1){
+        xSemaphoreTake(i2c_line, portMAX_DELAY);
         remainingTimeBudget = ui.update();
-        //Serial.print("Delay: ");
-        //Serial.println(remainingTimeBudget);
+       // Serial.print("Delay: ");
+       // Serial.println(remainingTimeBudget);
         
-        if (remainingTimeBudget > 0){  vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); }
+        if (remainingTimeBudget > 0){xSemaphoreGive(i2c_line);  vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); }
 
     }
     

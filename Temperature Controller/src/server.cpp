@@ -78,6 +78,12 @@ uint8_t ButtonId0 = 0;
 uint8_t SwitchId1 = 0;
 uint8_t SwitchId2 = 0;
 uint8_t SwitchId3 = 0;
+uint8_t select5 = 0;
+uint8_t select0 = 0;
+uint8_t select1 = 0;
+uint8_t select2 = 0;
+uint8_t select3 = 0;
+uint8_t select4 = 0;
 
 void sliderCallback(Control *sender, int type) {
 
@@ -205,21 +211,46 @@ void WebServer( void * parameter)
   SliderIdG = ESPUI.addControl(ControlType::Slider, "Blue brightness<br>Яркость синий", String(int(double(G_brightness)/2.55)), ControlColor::Peterriver, tab1, &sliderCallback);
   SliderIdB = ESPUI.addControl(ControlType::Slider, "Green brightness<br>Яркость зеленый", String(int(double(B_brightness)/2.55)), ControlColor::Emerald, tab1, &sliderCallback);
   SliderIdW = ESPUI.addControl(ControlType::Slider, "White brightness<br>Яркость белый", String(int(double(W_brightness)/2.55)), ControlColor::None, tab1, &sliderCallback);
-  SliderIdBrt = ESPUI.addControl(ControlType::Slider, "Display brightness *<br>Яркость экранаb *", String(int(double(contrast)/2.55)), ControlColor::Sunflower, tab1, &sliderCallback);
-  uint16_t select1 = ESPUI.addControl( ControlType::Select, "Display UI *<br>Вид главного экрана *", String(DisplayUIFlag), ControlColor::None, tab1, &selectCallback);
+  SliderIdBrt = ESPUI.addControl(ControlType::Slider, "Display brightness *<br>Яркость экрана *", String(int(double(contrast)/2.55)), ControlColor::Sunflower, tab1, &sliderCallback);
+  select5 = ESPUI.addControl( ControlType::Select, "Display UI *<br>Вид главного экрана *", String(DisplayUIFlag), ControlColor::None, tab1, &selectCallback);
   ESPUI.addControl(ControlType::Label, "* - Reload to save!<br>* - Для сохранения перезагрузите!", "", ControlColor::Alizarin, tab1);
-  ESPUI.addControl( ControlType::Option, "Option 1", "0", ControlColor::Alizarin, select1 );
-  ESPUI.addControl( ControlType::Option, "Option 2", "1", ControlColor::Alizarin, select1 );
-  ESPUI.addControl( ControlType::Option, "Option 3", "2", ControlColor::Alizarin, select1 );
+  ESPUI.addControl( ControlType::Option, "Option 1", "0", ControlColor::Alizarin, select5);
+  ESPUI.addControl( ControlType::Option, "Option 2", "1", ControlColor::Alizarin, select5);
+  ESPUI.addControl( ControlType::Option, "Option 3", "2", ControlColor::Alizarin, select5);
 
   NumberIdTW = ESPUI.addControl(ControlType::Number, "Compressor Work Time<br>Время работы компрессора (Min)", "0", ControlColor::Alizarin, tab2, &numberCall);
   NumberIdTD = ESPUI.addControl(ControlType::Number, "Defreeze Duration<br>Время оттайки (Min)", "0", ControlColor::Alizarin, tab2, &numberCall);
   SwitchId1 = ESPUI.addControl(ControlType::Switcher, "Display tenths<br>Отображать десятые", "0", ControlColor::None, tab2, &switcherCallback);
   NumberIdC0 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #0<br>Калибровка термодатчика #0 (°C):", "0", ControlColor::Sunflower, tab2, &numberCall);
+  select0 = ESPUI.addControl( ControlType::Select, "Sensor #0 located<br>Расположение термодатчика #0", "0", ControlColor::None, tab2, &selectCallback);
   NumberIdC1 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #1<br>Калибровка термодатчика #1 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  select1 = ESPUI.addControl( ControlType::Select, "Sensor #1 located<br>Расположение термодатчика #1", "0", ControlColor::None, tab2, &selectCallback);
   NumberIdC2 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #2<br>Калибровка термодатчика #2 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  select2 = ESPUI.addControl( ControlType::Select, "Sensor #2 located<br>Расположение термодатчика #2", "0", ControlColor::None, tab2, &selectCallback);
   NumberIdC3 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #3<br>Калибровка термодатчика #3 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  select3 = ESPUI.addControl( ControlType::Select, "Sensor #3 located<br>Расположение термодатчика #3", "0", ControlColor::None, tab2, &selectCallback);
   NumberIdC4 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #4<br>Калибровка термодатчика #4 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  select4 = ESPUI.addControl( ControlType::Select, "Sensor #4 located<br>Расположение термодатчика #4", "0", ControlColor::None, tab2, &selectCallback);
+  ESPUI.addControl( ControlType::Option, "Evaporator 1 / Испаритель 1", "0", ControlColor::Alizarin, select0);
+  ESPUI.addControl( ControlType::Option, "Zone 1 / Зона 1", "1", ControlColor::Alizarin, select0);
+  ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2 (в разработке)", "2", ControlColor::Alizarin, select0);
+  ESPUI.addControl( ControlType::Option, "Zone 2 / Зона 2 (в разработке)", "3", ControlColor::Alizarin, select0);
+  ESPUI.addControl( ControlType::Option, "Evaporator 1 / Испаритель 1", "0", ControlColor::Alizarin, select1);
+  ESPUI.addControl( ControlType::Option, "Zone 1 / Зона 1", "1", ControlColor::Alizarin, select1);
+  ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2 (в разработке)", "2", ControlColor::Alizarin, select1);
+  ESPUI.addControl( ControlType::Option, "Zone 2 / Зона 2 (в разработке)", "3", ControlColor::Alizarin, select1);
+  ESPUI.addControl( ControlType::Option, "Evaporator 1 / Испаритель 1", "0", ControlColor::Alizarin, select2);
+  ESPUI.addControl( ControlType::Option, "Zone 1 / Зона 1", "1", ControlColor::Alizarin, select2);
+  ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2 (в разработке)", "2", ControlColor::Alizarin, select2);
+  ESPUI.addControl( ControlType::Option, "Zone 2 / Зона 2 (в разработке)", "3", ControlColor::Alizarin, select2);
+  ESPUI.addControl( ControlType::Option, "Evaporator 1 / Испаритель 1", "0", ControlColor::Alizarin, select3);
+  ESPUI.addControl( ControlType::Option, "Zone 1 / Зона 1", "1", ControlColor::Alizarin, select3);
+  ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2", "2 (в разработке)", ControlColor::Alizarin, select3);
+  ESPUI.addControl( ControlType::Option, "Zone 2 / Зона 2 (в разработке)", "3", ControlColor::Alizarin, select3);
+  ESPUI.addControl( ControlType::Option, "Evaporator 1 / Испаритель 1", "0", ControlColor::Alizarin, select4);
+  ESPUI.addControl( ControlType::Option, "Zone 1 / Зона 1", "1", ControlColor::Alizarin, select4);
+  ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2", "2 (в разработке)", ControlColor::Alizarin, select4);
+  ESPUI.addControl( ControlType::Option, "Zone 2 / Зона 2 (в разработке)", "3", ControlColor::Alizarin, select4);
 
   ButtonId0 = ESPUI.addControl(ControlType::Button, "Reboot Controller<br>Перезагрузить", "Reboot now<br>Сейчас", ControlColor::Alizarin, tab3, &buttonCallback);
   SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Fan<br>Вентилятор", "0", ControlColor::None, tab3, &switcherCallback);

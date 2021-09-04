@@ -7,5 +7,6 @@ void Compressor( void * parameter);
 void Ventilator( void * parameter);
 void Sensors( void * parameter);
 void Additional( void * parameter);
+void ClockRTC( void * parameter);
 
 #endif

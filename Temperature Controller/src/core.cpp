@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "RTClib.h"
 #include <Preferences.h>
 #include <pins_define.h>
 
@@ -29,6 +30,8 @@ uint8_t R_brightness = 0;
 uint8_t G_brightness = 0;
 uint8_t B_brightness = 0;
 uint8_t W_brightness = 0;
+uint8_t HourNow = 0;
+uint8_t MinNow = 0;
 
 bool FanFlag = false;
 bool DefreezeFlag = false;
@@ -41,14 +44,15 @@ bool TenthsFlag = true;
 bool Warning = false;
 bool Debug = false;
 
-// Extern var.
-
+// Extern.
+extern SemaphoreHandle_t i2c_line;
 
 // Dev.
 OneWire oneWire(DS18B20);
 DallasTemperature sensors(&oneWire);
 DeviceAddress tempDeviceAddress; 
 Preferences preferences;
+RTC_DS3231 rtc;
 
 // function to print a device address
 void printAddress(DeviceAddress deviceAddress);
@@ -294,6 +298,42 @@ void Additional( void * parameter)
         
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
+    }
+    
+    vTaskDelete( NULL );
+}
+
+void ClockRTC( void * parameter)
+{
+    if(Debug) Serial.println("ClockRTC task start!");
+
+    /*    #1 Additional tasks    */
+    xSemaphoreTake(i2c_line, portMAX_DELAY);
+    Wire.setPins(21,22);
+    Wire.begin(21,22,400000);
+    if (! rtc.begin()) {
+    Warning = true;
+    Serial.println("Error RTC!");
+    }
+ 
+    if (rtc.lostPower()) {
+    Serial.println("RTC lost power, let's set the time!");
+    Warning = true;
+    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    // This line sets the RTC with an explicit date & time, for example to set
+    // January 21, 2014 at 3am you would call:
+    //rtc.adjust(DateTime(2021, 9, 4, 20, 0, 0));
+    }
+
+    xSemaphoreGive(i2c_line);
+
+    while(1){
+        xSemaphoreTake(i2c_line, portMAX_DELAY);
+        DateTime now = rtc.now();
+        HourNow = now.hour();
+        MinNow = now.minute();
+        xSemaphoreGive(i2c_line);
+        vTaskDelay(5000/portTICK_PERIOD_MS);
     }
     
     vTaskDelete( NULL );
