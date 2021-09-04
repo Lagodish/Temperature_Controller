@@ -52,14 +52,7 @@ void numberCall(Control *sender, int type) {
   Serial.println(sender->value); }
   */
 
-void textCall(Control *sender, int type) {
-  Serial.print("Text: ID: ");
-  Serial.print(sender->id);
-  Serial.print(", Value: ");
-  Serial.println(sender->value);
-}
-
-void slider(Control *sender, int type) {
+void sliderCallback(Control *sender, int type) {
 
   int sliderValue = sender->value.toInt();
   int id = int(sender->id);
@@ -90,7 +83,7 @@ void buttonCallback(Control *sender, int type) {
 }
 
 
-void switcher(Control *sender, int value) {
+void switcherCallback(Control *sender, int value) {
   int id = int(sender->id);
   switch (value) {
   case S_ACTIVE:
@@ -110,6 +103,10 @@ void switcher(Control *sender, int value) {
 
   Serial.print(" ");
   Serial.println(id);
+}
+
+void numberCall( Control* sender, int type ) {
+  Serial.println( sender->value );
 }
 
 void WebServer( void * parameter)
@@ -153,19 +150,33 @@ void WebServer( void * parameter)
   Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
 
 //TODO add multi tab: light, adv. set., pro set...
+  statusLabelId = ESPUI.addControl( ControlType::Label, "Status:", "", ControlColor::Turquoise );
+  millisLabelId = ESPUI.addControl( ControlType::Label, "UpTime:", "", ControlColor::Carrot );
 
-  statusLabelId = ESPUI.label("Status:", ControlColor::Carrot, "Stop");
-  millisLabelId = ESPUI.label("UpTime:", ControlColor::None, "0");
-  ESPUI.button("Reboot Controller", &buttonCallback, ControlColor::Sunflower, "Reboot now");
-  SwitchIdF = ESPUI.switcher("Fan #1", &switcher, ControlColor::None, FanFlag);
-  SwitchIdR = ESPUI.switcher("Relay #1", &switcher, ControlColor::None, RelayFlag);
-  SwitchIdC = ESPUI.switcher("Compressor #1", &switcher, ControlColor::None, CompressorFlag);
-  SliderIdR = ESPUI.slider("Red brightness", &slider, ControlColor::Alizarin, R_brightness,0,255);
-  SliderIdG = ESPUI.slider("Blue brightness", &slider, ControlColor::Turquoise, B_brightness,0,255);
-  SliderIdB = ESPUI.slider("Green brightness", &slider, ControlColor::Emerald, G_brightness,0,255);
-  SliderIdW = ESPUI.slider("White brightness", &slider, ControlColor::None, W_brightness,0,255);
-  SliderIdBrt = ESPUI.slider("Display brightness", &slider, ControlColor::None, contrast,50,255);
-  graphId = ESPUI.graph("Graph Temperature", ControlColor::Sunflower);
+  uint16_t tab1 = ESPUI.addControl( ControlType::Tab, "Light", "Light" );
+  uint16_t tab2 = ESPUI.addControl( ControlType::Tab, "Main", "Main" );
+  uint16_t tab3 = ESPUI.addControl( ControlType::Tab, "Additional", "Additional" );
+
+  SliderIdR = ESPUI.addControl(ControlType::Slider, "Red brightness", String(R_brightness), ControlColor::Alizarin, tab1, &sliderCallback);
+  SliderIdG = ESPUI.addControl(ControlType::Slider, "Blue brightness", String(G_brightness), ControlColor::Turquoise, tab1, &sliderCallback);
+  SliderIdB = ESPUI.addControl(ControlType::Slider, "Green brightness", String(B_brightness), ControlColor::Emerald, tab1, &sliderCallback);
+  SliderIdW = ESPUI.addControl(ControlType::Slider, "White brightness", String(W_brightness), ControlColor::None, tab1, &sliderCallback);
+  SliderIdBrt = ESPUI.addControl(ControlType::Slider, "Display brightness", String(contrast), ControlColor::None, tab1, &sliderCallback);
+
+  ESPUI.addControl(ControlType::Number, "Compressor Work Time (Min):", "0", ControlColor::Alizarin, tab2, &numberCall);
+  ESPUI.addControl(ControlType::Number, "Defreeze Duration (Min):", "0", ControlColor::Alizarin, tab2, &numberCall);
+  ESPUI.addControl(ControlType::Number, "Calibration Sensor #0 (°C):", "0", ControlColor::Alizarin, tab2, &numberCall);
+  ESPUI.addControl(ControlType::Number, "Calibration Sensor #1 (°C)", "0", ControlColor::Alizarin, tab2, &numberCall);
+  ESPUI.addControl(ControlType::Number, "Calibration Sensor #2 (°C)", "0", ControlColor::Alizarin, tab2, &numberCall);
+  ESPUI.addControl(ControlType::Number, "Calibration Sensor #3 (°C)", "0", ControlColor::Alizarin, tab2, &numberCall);
+  ESPUI.addControl(ControlType::Number, "Calibration Sensor #4 (°C)", "0", ControlColor::Alizarin, tab2, &numberCall);
+
+  ESPUI.addControl(ControlType::Button, "Reboot Controller", "Reboot now", ControlColor::Peterriver, tab3, &buttonCallback );
+  SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Fan #1", "", ControlColor::None, tab3, &switcherCallback);
+  SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Relay #1", "", ControlColor::None, tab3, &switcherCallback);
+  SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Compressor #1", "", ControlColor::None, tab3, &switcherCallback);
+  graphId = ESPUI.addControl(ControlType::Graph, "Graph Temperature", "", ControlColor::Sunflower, tab3);
+
   //NumberIdTempTarg = ESPUI.number("Target Temperature", &numberCall, ControlColor::None, int(TargetTemp) , 0, 30);
   //ESPUI.button("Push Button", &buttonCallback, ControlColor::Peterriver, "Press");
 
@@ -197,20 +208,19 @@ void WebServer( void * parameter)
 
         if(CompressorFlag||FanFlag||RelayFlag){
           Serial.println("Status: Operate");
-          ESPUI.print(statusLabelId, "Operate");}
+          ESPUI.updateControlValue(statusLabelId, "Operate");}
         else{
-          ESPUI.print(statusLabelId, "Stop");
+          ESPUI.updateControlValue(statusLabelId, "Stop");
           Serial.println("Status: Stop");}
         
-        ESPUI.addGraphPoint(graphId, int(round(tempC)));
-        ESPUI.print(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
 
-      //TODO add
+        ESPUI.updateControlValue(graphId, String(tempC));
+        ESPUI.updateControlValue(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
+
         //update stages
-        ESPUI.updateSwitcher(SwitchIdF, FanFlag);
-        ESPUI.updateSwitcher(SwitchIdR, RelayFlag);
-        ESPUI.updateSwitcher(SwitchIdC, CompressorFlag);
-        //ESPUI.updateNumber(NumberIdTempTarg, int(TargetTemp));
+        ESPUI.updateControlValue( SwitchIdF, FanFlag ? "1" : "0");
+        ESPUI.updateControlValue( SwitchIdR, RelayFlag ? "1" : "0");
+        ESPUI.updateControlValue( SwitchIdC, CompressorFlag ? "1" : "0");
         
         vTaskDelay(3000/portTICK_PERIOD_MS);
 
