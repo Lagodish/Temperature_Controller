@@ -21,6 +21,12 @@ double CalibTemp_2 = 0.0;
 double CalibTemp_3 = 0.0;
 double CalibTemp_4 = 0.0;
 
+int TempSensorLocation_0 = 0;
+int TempSensorLocation_1 = 0;
+int TempSensorLocation_2 = 0;
+int TempSensorLocation_3 = 0;
+int TempSensorLocation_4 = 0;
+
 int contrast = 0;
 int numberOfDevices = 0;
 int MinWorkComp = 0;
@@ -79,6 +85,11 @@ void Storage( void * parameter)
     B_brightness = preferences.getInt("B_brightness", 0);
     W_brightness = preferences.getInt("W_brightness", 255);
     DisplayUIFlag = preferences.getInt("DisplayUIFlag", 1);
+    TempSensorLocation_0 = preferences.getInt("TempSensorLoc_0", 0);
+    TempSensorLocation_1 = preferences.getInt("TempSensorLoc_1", 0);
+    TempSensorLocation_2 = preferences.getInt("TempSensorLoc_2", 0);
+    TempSensorLocation_3 = preferences.getInt("TempSensorLoc_3", 0);
+    TempSensorLocation_4 = preferences.getInt("TempSensorLoc_4", 0);
     LockFlag = preferences.getBool("LockFlag", false);
     TenthsFlag = preferences.getBool("TenthsFlag", true);
 
@@ -95,6 +106,11 @@ void Storage( void * parameter)
     int MinWorkComp_Old = MinWorkComp;
     int MinDefreeze_Old = MinDefreeze;
     int DisplayUIFlag_old = DisplayUIFlag;
+    int TempSensorLocation_0_Old = TempSensorLocation_0;
+    int TempSensorLocation_1_Old = TempSensorLocation_1;
+    int TempSensorLocation_2_Old = TempSensorLocation_2;
+    int TempSensorLocation_3_Old = TempSensorLocation_3;
+    int TempSensorLocation_4_Old = TempSensorLocation_4;
     uint8_t R_brightness_Old = R_brightness;
     uint8_t G_brightness_Old = G_brightness;
     uint8_t B_brightness_Old = B_brightness;
@@ -108,8 +124,9 @@ void Storage( void * parameter)
         if((LockFlag_Old != LockFlag)||(contrast_Old != contrast)||(R_brightness_Old != R_brightness)||(G_brightness_Old != G_brightness)||
         (B_brightness_Old != B_brightness)||(W_brightness_Old != W_brightness)||(MinWorkComp_Old != MinWorkComp)||(MinDefreeze_Old != MinDefreeze)||
         (abs(TargetTemp_Old-TargetTemp)>0.1)||(abs(CalibTemp_0_Old - CalibTemp_0)>0.01)||(TenthsFlag_old != TenthsFlag)||(DisplayUIFlag_old != DisplayUIFlag)||
-        (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)
-        ||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||(abs(CalibTemp_4_Old - CalibTemp_4)>0.01)){
+        (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||
+        (abs(CalibTemp_4_Old - CalibTemp_4)>0.01)||(TempSensorLocation_0_Old != TempSensorLocation_0)||(TempSensorLocation_1_Old != TempSensorLocation_1)||
+        (TempSensorLocation_2_Old != TempSensorLocation_2)||(TempSensorLocation_3_Old != TempSensorLocation_3)||(TempSensorLocation_4_Old != TempSensorLocation_4)){
 
             TargetTemp_Old = TargetTemp;
             CalibTemp_0_Old = CalibTemp_0;
@@ -127,6 +144,11 @@ void Storage( void * parameter)
             LockFlag_Old = LockFlag;
             TenthsFlag_old = TenthsFlag;
             DisplayUIFlag_old = DisplayUIFlag;
+            TempSensorLocation_0_Old = TempSensorLocation_0;
+            TempSensorLocation_1_Old = TempSensorLocation_1;
+            TempSensorLocation_2_Old = TempSensorLocation_2;
+            TempSensorLocation_3_Old = TempSensorLocation_3;
+            TempSensorLocation_4_Old = TempSensorLocation_4;
             
             preferences.begin("data-space", false);
             
@@ -144,13 +166,18 @@ void Storage( void * parameter)
             preferences.putInt("B_brightness", B_brightness);
             preferences.putInt("DisplayUIFlag", DisplayUIFlag);
             preferences.putInt("W_brightness", W_brightness);
+            preferences.putInt("TempSensorLoc_0", TempSensorLocation_0);
+            preferences.putInt("TempSensorLoc_1", TempSensorLocation_1);
+            preferences.putInt("TempSensorLoc_2", TempSensorLocation_2);
+            preferences.putInt("TempSensorLoc_3", TempSensorLocation_3);
+            preferences.putInt("TempSensorLoc_4", TempSensorLocation_4);
             preferences.putBool("LockFlag", LockFlag);
             preferences.putBool("TenthsFlag", TenthsFlag);
             
 
             preferences.end();
 
-            if(Debug) Serial.println("Data Updated!");
+            if(1) Serial.println("Data Updated!");
         }
 
         vTaskDelay(5000/portTICK_PERIOD_MS);
@@ -270,7 +297,7 @@ void Sensors( void * parameter)
         for(int i=0;i<=numberOfDevices; i++){
             // Search the wire for address
             double temp = double(sensors.getTempCByIndex(i));
-                if((temp>-50.0f)&&(temp<90.0f)){
+                if((temp>-50.0f)&&(temp<80.0f)){
                     tempC = temp;
 
                     if(i==0) TempSensor_0 = temp;

@@ -41,6 +41,11 @@ extern uint8_t G_brightness;
 extern uint8_t B_brightness;
 extern uint8_t W_brightness;
 extern int DisplayUIFlag;
+extern int TempSensorLocation_0;
+extern int TempSensorLocation_1;
+extern int TempSensorLocation_2;
+extern int TempSensorLocation_3;
+extern int TempSensorLocation_4;
 
 // Var.
 
@@ -151,6 +156,11 @@ void numberCall( Control* sender, int type ) {
     
   if(id==NumberIdTW){MinWorkComp = int(data);}
   if(id==NumberIdTD){MinDefreeze = int(data);}
+  if(id==NumberIdC0){TempSensorLocation_0 = int(data);}
+  if(id==NumberIdC1){TempSensorLocation_1 = int(data);}
+  if(id==NumberIdC2){TempSensorLocation_2 = int(data);}
+  if(id==NumberIdC3){TempSensorLocation_3 = int(data);}
+  if(id==NumberIdC4){TempSensorLocation_4 = int(data);}
   if(id==NumberIdC0){CalibTemp_0 = data;}
   if(id==NumberIdC1){CalibTemp_1 = data;}
   if(id==NumberIdC2){CalibTemp_2 = data;}
@@ -218,19 +228,19 @@ void WebServer( void * parameter)
   ESPUI.addControl( ControlType::Option, "Option 2", "1", ControlColor::Alizarin, select5);
   ESPUI.addControl( ControlType::Option, "Option 3", "2", ControlColor::Alizarin, select5);
 
-  NumberIdTW = ESPUI.addControl(ControlType::Number, "Compressor Work Time<br>Время работы компрессора (Min)", "0", ControlColor::Alizarin, tab2, &numberCall);
-  NumberIdTD = ESPUI.addControl(ControlType::Number, "Defreeze Duration<br>Время оттайки (Min)", "0", ControlColor::Alizarin, tab2, &numberCall);
-  SwitchId1 = ESPUI.addControl(ControlType::Switcher, "Display tenths<br>Отображать десятые", "0", ControlColor::None, tab2, &switcherCallback);
-  NumberIdC0 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #0<br>Калибровка термодатчика #0 (°C):", "0", ControlColor::Sunflower, tab2, &numberCall);
-  select0 = ESPUI.addControl( ControlType::Select, "Sensor #0 located<br>Расположение термодатчика #0", "0", ControlColor::None, tab2, &selectCallback);
-  NumberIdC1 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #1<br>Калибровка термодатчика #1 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
-  select1 = ESPUI.addControl( ControlType::Select, "Sensor #1 located<br>Расположение термодатчика #1", "0", ControlColor::None, tab2, &selectCallback);
-  NumberIdC2 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #2<br>Калибровка термодатчика #2 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
-  select2 = ESPUI.addControl( ControlType::Select, "Sensor #2 located<br>Расположение термодатчика #2", "0", ControlColor::None, tab2, &selectCallback);
-  NumberIdC3 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #3<br>Калибровка термодатчика #3 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
-  select3 = ESPUI.addControl( ControlType::Select, "Sensor #3 located<br>Расположение термодатчика #3", "0", ControlColor::None, tab2, &selectCallback);
-  NumberIdC4 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #4<br>Калибровка термодатчика #4 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
-  select4 = ESPUI.addControl( ControlType::Select, "Sensor #4 located<br>Расположение термодатчика #4", "0", ControlColor::None, tab2, &selectCallback);
+  NumberIdTW = ESPUI.addControl(ControlType::Number, "Compressor Work Time<br>Время работы компрессора (Min)", String(MinWorkComp), ControlColor::Alizarin, tab2, &numberCall);
+  NumberIdTD = ESPUI.addControl(ControlType::Number, "Defreeze Duration<br>Время оттайки (Min)", String(MinDefreeze), ControlColor::Alizarin, tab2, &numberCall);
+  SwitchId1 = ESPUI.addControl(ControlType::Switcher, "Display tenths<br>Отображать десятые", TenthsFlag ? "1" : "0", ControlColor::None, tab2, &switcherCallback);
+  NumberIdC0 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #0<br>Калибровка термодатчика #0 (°C):", String(CalibTemp_0), ControlColor::Sunflower, tab2, &numberCall);
+  select0 = ESPUI.addControl( ControlType::Select, "Sensor #0 located<br>Расположение термодатчика #0", String(TempSensorLocation_0), ControlColor::None, tab2, &selectCallback);
+  NumberIdC1 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #1<br>Калибровка термодатчика #1 (°C)", String(CalibTemp_1), ControlColor::Sunflower, tab2, &numberCall);
+  select1 = ESPUI.addControl( ControlType::Select, "Sensor #1 located<br>Расположение термодатчика #1", String(TempSensorLocation_1), ControlColor::None, tab2, &selectCallback);
+  NumberIdC2 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #2<br>Калибровка термодатчика #2 (°C)", String(CalibTemp_2), ControlColor::Sunflower, tab2, &numberCall);
+  select2 = ESPUI.addControl( ControlType::Select, "Sensor #2 located<br>Расположение термодатчика #2", String(TempSensorLocation_2), ControlColor::None, tab2, &selectCallback);
+  NumberIdC3 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #3<br>Калибровка термодатчика #3 (°C)", String(CalibTemp_3), ControlColor::Sunflower, tab2, &numberCall);
+  select3 = ESPUI.addControl( ControlType::Select, "Sensor #3 located<br>Расположение термодатчика #3", String(TempSensorLocation_3), ControlColor::None, tab2, &selectCallback);
+  NumberIdC4 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #4<br>Калибровка термодатчика #4 (°C)", String(CalibTemp_4), ControlColor::Sunflower, tab2, &numberCall);
+  select4 = ESPUI.addControl( ControlType::Select, "Sensor #4 located<br>Расположение термодатчика #4", String(TempSensorLocation_4), ControlColor::None, tab2, &selectCallback);
   ESPUI.addControl( ControlType::Option, "Evaporator 1 / Испаритель 1", "0", ControlColor::Alizarin, select0);
   ESPUI.addControl( ControlType::Option, "Zone 1 / Зона 1", "1", ControlColor::Alizarin, select0);
   ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2 (в разработке)", "2", ControlColor::Alizarin, select0);
@@ -245,11 +255,11 @@ void WebServer( void * parameter)
   ESPUI.addControl( ControlType::Option, "Zone 2 / Зона 2 (в разработке)", "3", ControlColor::Alizarin, select2);
   ESPUI.addControl( ControlType::Option, "Evaporator 1 / Испаритель 1", "0", ControlColor::Alizarin, select3);
   ESPUI.addControl( ControlType::Option, "Zone 1 / Зона 1", "1", ControlColor::Alizarin, select3);
-  ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2", "2 (в разработке)", ControlColor::Alizarin, select3);
+  ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2 (в разработке)", "2", ControlColor::Alizarin, select3);
   ESPUI.addControl( ControlType::Option, "Zone 2 / Зона 2 (в разработке)", "3", ControlColor::Alizarin, select3);
   ESPUI.addControl( ControlType::Option, "Evaporator 1 / Испаритель 1", "0", ControlColor::Alizarin, select4);
   ESPUI.addControl( ControlType::Option, "Zone 1 / Зона 1", "1", ControlColor::Alizarin, select4);
-  ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2", "2 (в разработке)", ControlColor::Alizarin, select4);
+  ESPUI.addControl( ControlType::Option, "Evaporator 2 / Испаритель 2 (в разработке)", "2", ControlColor::Alizarin, select4);
   ESPUI.addControl( ControlType::Option, "Zone 2 / Зона 2 (в разработке)", "3", ControlColor::Alizarin, select4);
 
   ButtonId0 = ESPUI.addControl(ControlType::Button, "Reboot Controller<br>Перезагрузить", "Reboot now<br>Сейчас", ControlColor::Alizarin, tab3, &buttonCallback);
@@ -289,15 +299,6 @@ void WebServer( void * parameter)
 
   ESPUI.begin("Temperature Controller","admin","admin");
   ESPUI.clearGraph(graphId);
-   // static bool testSwitchState = false;
-  ESPUI.updateControlValue(NumberIdTW, String(MinWorkComp));
-  ESPUI.updateControlValue(NumberIdTD, String(MinDefreeze));
-  ESPUI.updateControlValue(NumberIdC0, String(CalibTemp_0));
-  ESPUI.updateControlValue(NumberIdC1, String(CalibTemp_1));
-  ESPUI.updateControlValue(NumberIdC2, String(CalibTemp_2));
-  ESPUI.updateControlValue(NumberIdC3, String(CalibTemp_3));
-  ESPUI.updateControlValue(NumberIdC4, String(CalibTemp_4));
-  ESPUI.updateControlValue(SwitchId1, TenthsFlag ? "1" : "0");
 
     while(1){
 

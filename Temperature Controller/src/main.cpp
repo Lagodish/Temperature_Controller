@@ -16,9 +16,9 @@ void setup() {
   Serial.begin(115200); //UART setup
 
   i2c_line = xSemaphoreCreateMutex();
-  xTaskCreate(Storage, "Storage", 5000, NULL, 2, NULL);
-  xTaskCreate(Sensors, "Sensors", 5000, NULL, 1, NULL);
-  xTaskCreate(ClockRTC, "ClockRTC", 5000, NULL, 1, NULL);
+  xTaskCreate(Storage, "Storage", 10000, NULL, 2, NULL);
+  xTaskCreate(Sensors, "Sensors", 8000, NULL, 1, NULL);
+  xTaskCreate(ClockRTC, "ClockRTC", 7000, NULL, 1, NULL);
   xTaskCreate(Light, "Light", 5000, NULL, 1, NULL);
   xTaskCreate(Compressor, "Compressor", 5000, NULL, 1, NULL);
   xTaskCreate(Ventilator, "Ventilator", 5000, NULL, 1, NULL);
