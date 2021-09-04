@@ -13,25 +13,32 @@ DNSServer dnsServer;
 #include <ESP8266WiFi.h>
 #endif
 
+// Extern var.
 extern float tempC;
+extern double CalibTemp_0;
+extern double CalibTemp_1;
+extern double CalibTemp_2;
+extern double CalibTemp_3;
+extern double CalibTemp_4;
+extern int MinWorkComp;
+extern int MinDefreeze;
+extern uint8_t contrast;
 extern bool FanFlag;
 extern bool RelayFlag;
 extern bool CompressorFlag;
-//extern float TargetTemp;
-extern uint8_t contrast;
 
+// Var.
 uint8_t R_brightness = 0;
 uint8_t G_brightness = 0;
 uint8_t B_brightness = 0;
 uint8_t W_brightness = 0;
 
+//WiFi  !!!! http://controller.local/  !!!!!
 const char *ssid = "Controller";
 const char *password = "12345678";
-
 const char *hostname = "controller";
 
-//    !!!! http://controller.local/  !!!!!
- 
+// Elements IDs
 uint8_t statusLabelId=0;
 uint8_t graphId=0;
 uint8_t millisLabelId=0;
@@ -43,26 +50,27 @@ uint8_t SliderIdG=0;
 uint8_t SliderIdB=0;
 uint8_t SliderIdW=0;
 uint8_t SliderIdBrt=0;
-//uint8_t NumberIdTempTarg=0;
+uint8_t NumberIdTW=0;
+uint8_t NumberIdTD=0;
+uint8_t NumberIdC0=0;
+uint8_t NumberIdC1=0;
+uint8_t NumberIdC2=0;
+uint8_t NumberIdC3=0;
+uint8_t NumberIdC4=0;
 
-/*
-void numberCall(Control *sender, int type) {
-  TargetTemp = sender->value.toDouble();
-  Serial.print("Target Temp Value: ");
-  Serial.println(sender->value); }
-  */
 
 void sliderCallback(Control *sender, int type) {
 
   int sliderValue = sender->value.toInt();
+  sliderValue = map(sliderValue, 0, 100, 0, 255);
   int id = int(sender->id);
 
   if((sliderValue>=0)&&(sliderValue<=255)){
-    if(id==SliderIdR){Serial.println("Red brightness"); R_brightness = sliderValue;}
-    if(id==SliderIdG){Serial.println("Green brightness"); G_brightness = sliderValue;}
-    if(id==SliderIdB){Serial.println("Blue brightness"); B_brightness = sliderValue;}
-    if(id==SliderIdW){Serial.println("White brightness"); W_brightness = sliderValue;}
-    if(id==SliderIdBrt){Serial.println("Display brightness"); contrast = sliderValue;}
+    if(id==SliderIdR){Serial.print("Red"); R_brightness = sliderValue;}
+    if(id==SliderIdG){Serial.print("Green"); G_brightness = sliderValue;}
+    if(id==SliderIdB){Serial.print("Blue"); B_brightness = sliderValue;}
+    if(id==SliderIdW){Serial.print("White"); W_brightness = sliderValue;}
+    if(id==SliderIdBrt){Serial.print("Display"); if(sliderValue<60){sliderValue=60;} contrast = sliderValue;}
     }
   
 
@@ -87,26 +95,36 @@ void switcherCallback(Control *sender, int value) {
   int id = int(sender->id);
   switch (value) {
   case S_ACTIVE:
-    if(SwitchIdF==id){ Serial.print("Active: F"); FanFlag = true;}
-    if(SwitchIdR==id){ Serial.print("Active: R"); RelayFlag = true;}
-    if(SwitchIdC==id){ Serial.print("Active: C"); CompressorFlag = true;}
+    if(SwitchIdF==id){ FanFlag = true;}
+    if(SwitchIdR==id){ RelayFlag = true;}
+    if(SwitchIdC==id){ CompressorFlag = true;}
 
     break;
 
   case S_INACTIVE:
-    if(SwitchIdF==id){ Serial.print("Inactive: F"); FanFlag = false;}
-    if(SwitchIdR==id){ Serial.print("Inactive: R"); RelayFlag = false;}
-    if(SwitchIdC==id){ Serial.print("Inactive: C"); CompressorFlag = false;}
+    if(SwitchIdF==id){ FanFlag = false;}
+    if(SwitchIdR==id){ RelayFlag = false;}
+    if(SwitchIdC==id){ CompressorFlag = false;}
 
     break;
   }
-
-  Serial.print(" ");
-  Serial.println(id);
 }
 
 void numberCall( Control* sender, int type ) {
-  Serial.println( sender->value );
+  int id = int(sender->id);
+  double data = (sender->value).toDouble();
+    
+  if(id==NumberIdTW){MinWorkComp = int(data);}
+  if(id==NumberIdTD){MinDefreeze = int(data);}
+  if(id==NumberIdC0){CalibTemp_0 = data;}
+  if(id==NumberIdC1){CalibTemp_1 = data;}
+  if(id==NumberIdC2){CalibTemp_2 = data;}
+  if(id==NumberIdC3){CalibTemp_3 = data;}
+  if(id==NumberIdC4){CalibTemp_4 = data;}
+
+  Serial.print(id);
+  Serial.print(" , Value: ");
+  Serial.println(data); 
 }
 
 void WebServer( void * parameter)
@@ -156,21 +174,21 @@ void WebServer( void * parameter)
   uint16_t tab2 = ESPUI.addControl(ControlType::Tab, "Main", "Main" );
   uint16_t tab3 = ESPUI.addControl(ControlType::Tab, "Additional", "Additional" );
 
-  SliderIdR = ESPUI.addControl(ControlType::Slider, "Red brightness", String(R_brightness), ControlColor::Alizarin, tab1, &sliderCallback);
-  SliderIdG = ESPUI.addControl(ControlType::Slider, "Blue brightness", String(G_brightness), ControlColor::Turquoise, tab1, &sliderCallback);
-  SliderIdB = ESPUI.addControl(ControlType::Slider, "Green brightness", String(B_brightness), ControlColor::Emerald, tab1, &sliderCallback);
-  SliderIdW = ESPUI.addControl(ControlType::Slider, "White brightness", String(W_brightness), ControlColor::None, tab1, &sliderCallback);
-  SliderIdBrt = ESPUI.addControl(ControlType::Slider, "Display brightness", String(contrast), ControlColor::None, tab1, &sliderCallback);
+  SliderIdR = ESPUI.addControl(ControlType::Slider, "Red brightness", String(double(R_brightness)/2.55), ControlColor::Alizarin, tab1, &sliderCallback);
+  SliderIdG = ESPUI.addControl(ControlType::Slider, "Blue brightness", String(double(G_brightness)/2.55), ControlColor::Peterriver, tab1, &sliderCallback);
+  SliderIdB = ESPUI.addControl(ControlType::Slider, "Green brightness", String(double(B_brightness)/2.55), ControlColor::Emerald, tab1, &sliderCallback);
+  SliderIdW = ESPUI.addControl(ControlType::Slider, "White brightness", String(double(W_brightness)/2.55), ControlColor::None, tab1, &sliderCallback);
+  SliderIdBrt = ESPUI.addControl(ControlType::Slider, "Display brightness", String(double(contrast)/2.55), ControlColor::Sunflower, tab1, &sliderCallback);
 
-  ESPUI.addControl(ControlType::Number, "Compressor Work Time (Min):", "0", ControlColor::Alizarin, tab2, &numberCall);
-  ESPUI.addControl(ControlType::Number, "Defreeze Duration (Min):", "0", ControlColor::Alizarin, tab2, &numberCall);
-  ESPUI.addControl(ControlType::Number, "Calibration Sensor #0 (°C):", "0", ControlColor::Alizarin, tab2, &numberCall);
-  ESPUI.addControl(ControlType::Number, "Calibration Sensor #1 (°C)", "0", ControlColor::Alizarin, tab2, &numberCall);
-  ESPUI.addControl(ControlType::Number, "Calibration Sensor #2 (°C)", "0", ControlColor::Alizarin, tab2, &numberCall);
-  ESPUI.addControl(ControlType::Number, "Calibration Sensor #3 (°C)", "0", ControlColor::Alizarin, tab2, &numberCall);
-  ESPUI.addControl(ControlType::Number, "Calibration Sensor #4 (°C)", "0", ControlColor::Alizarin, tab2, &numberCall);
+  NumberIdTW = ESPUI.addControl(ControlType::Number, "Compressor Work Time (Min):", "0", ControlColor::Alizarin, tab2, &numberCall);
+  NumberIdTD = ESPUI.addControl(ControlType::Number, "Defreeze Duration (Min):", "0", ControlColor::Alizarin, tab2, &numberCall);
+  NumberIdC0 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #0 (°C):", "0", ControlColor::Sunflower, tab2, &numberCall);
+  NumberIdC1 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #1 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  NumberIdC2 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #2 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  NumberIdC3 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #3 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  NumberIdC4 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #4 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
 
-  ESPUI.addControl(ControlType::Button, "Reboot Controller", "Reboot now", ControlColor::Peterriver, tab3, &buttonCallback );
+  ESPUI.addControl(ControlType::Button, "Reboot Controller", "Reboot now", ControlColor::Alizarin, tab3, &buttonCallback );
   SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Fan #1", "0", ControlColor::None, tab3, &switcherCallback);
   SwitchIdR = ESPUI.addControl(ControlType::Switcher, "Relay #1", "0", ControlColor::None, tab3, &switcherCallback);
   SwitchIdC = ESPUI.addControl(ControlType::Switcher, "Compressor #1", "0", ControlColor::None, tab3, &switcherCallback);
@@ -200,29 +218,34 @@ void WebServer( void * parameter)
   ESPUI.begin("Temperature Controller","admin","admin");
   ESPUI.clearGraph(graphId);
    // static bool testSwitchState = false;
+  ESPUI.updateControlValue(NumberIdTW, String(MinWorkComp));
+  ESPUI.updateControlValue(NumberIdTD, String(MinDefreeze));
+  ESPUI.updateControlValue(NumberIdC0, String(CalibTemp_0));
+  ESPUI.updateControlValue(NumberIdC1, String(CalibTemp_1));
+  ESPUI.updateControlValue(NumberIdC2, String(CalibTemp_2));
+  ESPUI.updateControlValue(NumberIdC3, String(CalibTemp_3));
+  ESPUI.updateControlValue(NumberIdC4, String(CalibTemp_4));
 
     while(1){
 
       dnsServer.processNextRequest();
 
-        if(CompressorFlag||FanFlag||RelayFlag){
-          Serial.println("Status: Operate");
-          ESPUI.updateControlValue(statusLabelId, "Operate");}
-        else{
-          ESPUI.updateControlValue(statusLabelId, "Stop");
-          Serial.println("Status: Stop");}
+      if(CompressorFlag||FanFlag||RelayFlag){
+        Serial.println("Status: Operate");
+        ESPUI.updateControlValue(statusLabelId, "Operate");}
+      else{
+        ESPUI.updateControlValue(statusLabelId, "Stop");
+        Serial.println("Status: Stop");}
         
+      ESPUI.updateControlValue(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
+      ESPUI.addGraphPoint(graphId, int(round(tempC)));
 
-        ESPUI.updateControlValue(graphId, String(int(round(tempC))));
-        ESPUI.updateControlValue(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
-
-        //update stages
-        ESPUI.updateControlValue(SwitchIdF, FanFlag ? "1" : "0");
-        ESPUI.updateControlValue(SwitchIdR, RelayFlag ? "1" : "0");
-        ESPUI.updateControlValue(SwitchIdC, CompressorFlag ? "1" : "0");
-        
-        vTaskDelay(3000/portTICK_PERIOD_MS);
-
+      //update stages
+      ESPUI.updateControlValue(SwitchIdF, FanFlag ? "1" : "0");
+      ESPUI.updateControlValue(SwitchIdR, RelayFlag ? "1" : "0");
+      ESPUI.updateControlValue(SwitchIdC, CompressorFlag ? "1" : "0");
+      
+      vTaskDelay(3000/portTICK_PERIOD_MS);
     }
     
     vTaskDelete( NULL );

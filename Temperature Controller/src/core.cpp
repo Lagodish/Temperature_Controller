@@ -7,14 +7,14 @@
 // Var.
 float tempC = 0.0f;
 
-double TargetTemp = 0.0f;
-double CalibTemp_0 = 0.0f;
-double CalibTemp_1 = 0.0f;
-double CalibTemp_2 = 0.0f;
-double CalibTemp_3 = 0.0f;
-double CalibTemp_4 = 0.0f;
+double TargetTemp = 0.0;
+double CalibTemp_0 = 0.0;
+double CalibTemp_1 = 0.0;
+double CalibTemp_2 = 0.0;
+double CalibTemp_3 = 0.0;
+double CalibTemp_4 = 0.0;
 
-int contrast = 100;
+int contrast = 0;
 int numberOfDevices = 0;
 int MinWorkComp = 0;
 int MinDefreeze = 0;
