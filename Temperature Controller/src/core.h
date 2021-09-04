@@ -6,5 +6,6 @@ void Light( void * parameter);
 void Compressor( void * parameter);
 void Ventilator( void * parameter);
 void Sensors( void * parameter);
+void Additional( void * parameter);
 
 #endif

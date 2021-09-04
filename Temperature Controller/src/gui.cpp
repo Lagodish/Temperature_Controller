@@ -10,7 +10,7 @@
 #include "GUI/iconset.h"
 
 extern float tempC;
-extern uint8_t contrast;
+extern int contrast;
 extern bool FanFlag;
 extern bool RelayFlag;
 extern bool CompressorFlag;
@@ -101,13 +101,16 @@ void GUI( void * parameter)
     ui.init();
     //display.flipScreenVertically();
 
-    int remainingTimeBudget = 0;
-    uint8_t oldData = 0;
+    //uint8_t oldData = 0;
+    //if(oldData!=contrast){oldData=contrast; display.setBrightness(contrast);}
+    display.setBrightness(contrast);
 
+    int remainingTimeBudget = 0;
+    
     while(1){        
         remainingTimeBudget = ui.update();
-        if (remainingTimeBudget > 0){  vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); 
-        if(oldData!=contrast){oldData=contrast; display.setBrightness(contrast);}}
+        if (remainingTimeBudget > 0){  vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); }
+
     }
     
     vTaskDelete( NULL );

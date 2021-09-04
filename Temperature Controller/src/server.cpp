@@ -17,7 +17,7 @@ extern float tempC;
 extern bool FanFlag;
 extern bool RelayFlag;
 extern bool CompressorFlag;
-extern float TargetTemp;
+//extern float TargetTemp;
 extern uint8_t contrast;
 
 uint8_t R_brightness = 0;
@@ -43,14 +43,14 @@ uint8_t SliderIdG=0;
 uint8_t SliderIdB=0;
 uint8_t SliderIdW=0;
 uint8_t SliderIdBrt=0;
-uint8_t SliderIdTempTarg=0;
+//uint8_t NumberIdTempTarg=0;
 
-void NextRequest( void * parameter);
-
+/*
 void numberCall(Control *sender, int type) {
-  TargetTemp = sender->value.toInt();
+  TargetTemp = sender->value.toDouble();
   Serial.print("Target Temp Value: ");
-   Serial.println(sender->value); }
+  Serial.println(sender->value); }
+  */
 
 void textCall(Control *sender, int type) {
   Serial.print("Text: ID: ");
@@ -69,7 +69,7 @@ void slider(Control *sender, int type) {
     if(id==SliderIdG){Serial.println("Green brightness"); G_brightness = sliderValue;}
     if(id==SliderIdB){Serial.println("Blue brightness"); B_brightness = sliderValue;}
     if(id==SliderIdW){Serial.println("White brightness"); W_brightness = sliderValue;}
-    if((id==SliderIdBrt)&&(sliderValue<=127)){Serial.println("Display brightness"); contrast = sliderValue;}
+    if(id==SliderIdBrt){Serial.println("Display brightness"); contrast = sliderValue;}
     }
   
 
@@ -80,11 +80,11 @@ void slider(Control *sender, int type) {
 void buttonCallback(Control *sender, int type) {
   switch (type) {
   case B_DOWN:
-    Serial.println("Button DOWN");
+    Serial.println("Software reset!");
     break;
 
   case B_UP:
-    Serial.println("Button UP");
+    ESP.restart();
     break;
   }
 }
@@ -156,18 +156,18 @@ void WebServer( void * parameter)
 
   statusLabelId = ESPUI.label("Status:", ControlColor::Carrot, "Stop");
   millisLabelId = ESPUI.label("UpTime:", ControlColor::None, "0");
-  //ESPUI.button("Push Button", &buttonCallback, ControlColor::Peterriver, "Press");
+  ESPUI.button("Reboot Controller", &buttonCallback, ControlColor::Sunflower, "Reboot now");
   SwitchIdF = ESPUI.switcher("Fan #1", &switcher, ControlColor::None, FanFlag);
   SwitchIdR = ESPUI.switcher("Relay #1", &switcher, ControlColor::None, RelayFlag);
   SwitchIdC = ESPUI.switcher("Compressor #1", &switcher, ControlColor::None, CompressorFlag);
   SliderIdR = ESPUI.slider("Red brightness", &slider, ControlColor::Alizarin, R_brightness,0,255);
-  SliderIdG = ESPUI.slider("Blue brightness", &slider, ControlColor::Emerald, B_brightness,0,255);
-  SliderIdB = ESPUI.slider("Green brightness", &slider, ControlColor::Turquoise, G_brightness,0,255);
+  SliderIdG = ESPUI.slider("Blue brightness", &slider, ControlColor::Turquoise, B_brightness,0,255);
+  SliderIdB = ESPUI.slider("Green brightness", &slider, ControlColor::Emerald, G_brightness,0,255);
   SliderIdW = ESPUI.slider("White brightness", &slider, ControlColor::None, W_brightness,0,255);
-  SliderIdBrt = ESPUI.slider("Display brightness", &slider, ControlColor::None, contrast,50,127);
-  //ESPUI.text("Controller Name:", &textCall, ControlColor::Alizarin, "Bear Boy");
-  SliderIdTempTarg = ESPUI.number("Target Temperature", &numberCall, ControlColor::None, int(TargetTemp) , 0, 30);
+  SliderIdBrt = ESPUI.slider("Display brightness", &slider, ControlColor::None, contrast,50,255);
   graphId = ESPUI.graph("Graph Temperature", ControlColor::Sunflower);
+  //NumberIdTempTarg = ESPUI.number("Target Temperature", &numberCall, ControlColor::None, int(TargetTemp) , 0, 30);
+  //ESPUI.button("Push Button", &buttonCallback, ControlColor::Peterriver, "Press");
 
   /*
    * .begin loads and serves all files from PROGMEM directly.
@@ -190,9 +190,11 @@ void WebServer( void * parameter)
   ESPUI.begin("Temperature Controller","admin","admin");
   ESPUI.clearGraph(graphId);
    // static bool testSwitchState = false;
-  xTaskCreate(NextRequest, "NextRequest", 5000, NULL, 1, NULL);
 
     while(1){
+
+      dnsServer.processNextRequest();
+
         if(CompressorFlag||FanFlag||RelayFlag){
           Serial.println("Status: Operate");
           ESPUI.print(statusLabelId, "Operate");}
@@ -203,31 +205,16 @@ void WebServer( void * parameter)
         ESPUI.addGraphPoint(graphId, int(round(tempC)));
         ESPUI.print(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
 
-      ///! TEST ONLY
-      FanFlag =! FanFlag;
-
       //TODO add
         //update stages
         ESPUI.updateSwitcher(SwitchIdF, FanFlag);
         ESPUI.updateSwitcher(SwitchIdR, RelayFlag);
         ESPUI.updateSwitcher(SwitchIdC, CompressorFlag);
+        //ESPUI.updateNumber(NumberIdTempTarg, int(TargetTemp));
         
-      
         vTaskDelay(3000/portTICK_PERIOD_MS);
 
     }
     
-    vTaskDelete( NULL );
-}
-
-void NextRequest( void * parameter)
-{
-
-    while(1){
-        dnsServer.processNextRequest();
-        vTaskDelay(500/portTICK_PERIOD_MS);
-
-    }
-
     vTaskDelete( NULL );
 }
