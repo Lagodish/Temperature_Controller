@@ -149,13 +149,12 @@ void WebServer( void * parameter)
   Serial.print("IP address: ");
   Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
 
-//TODO add multi tab: light, adv. set., pro set...
-  statusLabelId = ESPUI.addControl( ControlType::Label, "Status:", "", ControlColor::Turquoise );
-  millisLabelId = ESPUI.addControl( ControlType::Label, "UpTime:", "", ControlColor::Carrot );
+  statusLabelId = ESPUI.addControl(ControlType::Label, "Status:", "Stop", ControlColor::Turquoise );
+  millisLabelId = ESPUI.addControl(ControlType::Label, "UpTime:", "0.0 h", ControlColor::Carrot );
 
-  uint16_t tab1 = ESPUI.addControl( ControlType::Tab, "Light", "Light" );
-  uint16_t tab2 = ESPUI.addControl( ControlType::Tab, "Main", "Main" );
-  uint16_t tab3 = ESPUI.addControl( ControlType::Tab, "Additional", "Additional" );
+  uint16_t tab1 = ESPUI.addControl(ControlType::Tab, "Light", "Light" );
+  uint16_t tab2 = ESPUI.addControl(ControlType::Tab, "Main", "Main" );
+  uint16_t tab3 = ESPUI.addControl(ControlType::Tab, "Additional", "Additional" );
 
   SliderIdR = ESPUI.addControl(ControlType::Slider, "Red brightness", String(R_brightness), ControlColor::Alizarin, tab1, &sliderCallback);
   SliderIdG = ESPUI.addControl(ControlType::Slider, "Blue brightness", String(G_brightness), ControlColor::Turquoise, tab1, &sliderCallback);
@@ -172,10 +171,10 @@ void WebServer( void * parameter)
   ESPUI.addControl(ControlType::Number, "Calibration Sensor #4 (°C)", "0", ControlColor::Alizarin, tab2, &numberCall);
 
   ESPUI.addControl(ControlType::Button, "Reboot Controller", "Reboot now", ControlColor::Peterriver, tab3, &buttonCallback );
-  SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Fan #1", "", ControlColor::None, tab3, &switcherCallback);
-  SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Relay #1", "", ControlColor::None, tab3, &switcherCallback);
-  SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Compressor #1", "", ControlColor::None, tab3, &switcherCallback);
-  graphId = ESPUI.addControl(ControlType::Graph, "Graph Temperature", "", ControlColor::Sunflower, tab3);
+  SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Fan #1", "0", ControlColor::None, tab3, &switcherCallback);
+  SwitchIdR = ESPUI.addControl(ControlType::Switcher, "Relay #1", "0", ControlColor::None, tab3, &switcherCallback);
+  SwitchIdC = ESPUI.addControl(ControlType::Switcher, "Compressor #1", "0", ControlColor::None, tab3, &switcherCallback);
+  graphId = ESPUI.addControl(ControlType::Graph, "Graph Temperature", "0", ControlColor::Sunflower, tab3);
 
   //NumberIdTempTarg = ESPUI.number("Target Temperature", &numberCall, ControlColor::None, int(TargetTemp) , 0, 30);
   //ESPUI.button("Push Button", &buttonCallback, ControlColor::Peterriver, "Press");
@@ -214,13 +213,13 @@ void WebServer( void * parameter)
           Serial.println("Status: Stop");}
         
 
-        ESPUI.updateControlValue(graphId, String(tempC));
+        ESPUI.updateControlValue(graphId, String(int(round(tempC))));
         ESPUI.updateControlValue(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
 
         //update stages
-        ESPUI.updateControlValue( SwitchIdF, FanFlag ? "1" : "0");
-        ESPUI.updateControlValue( SwitchIdR, RelayFlag ? "1" : "0");
-        ESPUI.updateControlValue( SwitchIdC, CompressorFlag ? "1" : "0");
+        ESPUI.updateControlValue(SwitchIdF, FanFlag ? "1" : "0");
+        ESPUI.updateControlValue(SwitchIdR, RelayFlag ? "1" : "0");
+        ESPUI.updateControlValue(SwitchIdC, CompressorFlag ? "1" : "0");
         
         vTaskDelay(3000/portTICK_PERIOD_MS);
 
