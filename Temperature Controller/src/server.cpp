@@ -146,8 +146,15 @@ void switcherCallback(Control *sender, int value) {
 }
 
 void selectCallback( Control* sender, int value ) {
-  Serial.println(sender->value);
-  DisplayUIFlag = (sender->value).toInt();
+  int id = int(sender->id);
+  int data = (sender->value).toInt();
+
+  if(id==select0){TempSensorLocation_0 = data;}
+  if(id==select1){TempSensorLocation_1 = data;}
+  if(id==select2){TempSensorLocation_2 = data;}
+  if(id==select3){TempSensorLocation_3 = data;}
+  if(id==select4){TempSensorLocation_4 = data;}
+  if(id==select5){DisplayUIFlag = data;}
 }
 
 void numberCall( Control* sender, int type ) {
@@ -156,11 +163,6 @@ void numberCall( Control* sender, int type ) {
     
   if(id==NumberIdTW){MinWorkComp = int(data);}
   if(id==NumberIdTD){MinDefreeze = int(data);}
-  if(id==NumberIdC0){TempSensorLocation_0 = int(data);}
-  if(id==NumberIdC1){TempSensorLocation_1 = int(data);}
-  if(id==NumberIdC2){TempSensorLocation_2 = int(data);}
-  if(id==NumberIdC3){TempSensorLocation_3 = int(data);}
-  if(id==NumberIdC4){TempSensorLocation_4 = int(data);}
   if(id==NumberIdC0){CalibTemp_0 = data;}
   if(id==NumberIdC1){CalibTemp_1 = data;}
   if(id==NumberIdC2){CalibTemp_2 = data;}
