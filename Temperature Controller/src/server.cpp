@@ -31,12 +31,19 @@ extern uint8_t contrast;
 extern bool FanFlag;
 extern bool RelayFlag;
 extern bool CompressorFlag;
+extern bool Debug;
+extern bool TenthsFlag;
+extern bool LockFlag;
+extern bool DefreezeFlag;
+extern int DisplayUIFlag;
+extern uint8_t R_brightness;
+extern uint8_t G_brightness;
+extern uint8_t B_brightness;
+extern uint8_t W_brightness;
+extern int DisplayUIFlag;
 
 // Var.
-uint8_t R_brightness = 0;
-uint8_t G_brightness = 0;
-uint8_t B_brightness = 0;
-uint8_t W_brightness = 0;
+
 
 //WiFi  !!!! http://controller.local/  !!!!!
 const char *ssid = "Controller";
@@ -67,7 +74,10 @@ uint8_t NumberIdC1=0;
 uint8_t NumberIdC2=0;
 uint8_t NumberIdC3=0;
 uint8_t NumberIdC4=0;
-
+uint8_t ButtonId0 = 0;
+uint8_t SwitchId1 = 0;
+uint8_t SwitchId2 = 0;
+uint8_t SwitchId3 = 0;
 
 void sliderCallback(Control *sender, int type) {
 
@@ -75,20 +85,19 @@ void sliderCallback(Control *sender, int type) {
   int id = int(sender->id);
 
   if((sliderValue>=0)&&(sliderValue<=255)){
-    if(id==SliderIdBrt){Serial.print("Display"); contrast = int(round(map(sliderValue, 0, 100, 60, 255)));}
+    if(id==SliderIdBrt){contrast = int(round(map(sliderValue, 0, 100, 60, 255)));}
     sliderValue = int(round(map(sliderValue, 0, 100, 0, 255)));
-    if(id==SliderIdR){Serial.print("Red"); R_brightness = sliderValue;}
-    if(id==SliderIdG){Serial.print("Green"); G_brightness = sliderValue;}
-    if(id==SliderIdB){Serial.print("Blue"); B_brightness = sliderValue;}
-    if(id==SliderIdW){Serial.print("White"); W_brightness = sliderValue;}
+    if(id==SliderIdR){R_brightness = sliderValue;}
+    if(id==SliderIdG){G_brightness = sliderValue;}
+    if(id==SliderIdB){B_brightness = sliderValue;}
+    if(id==SliderIdW){W_brightness = sliderValue;}
     }
   
-
-  Serial.print(", Value: ");
-  Serial.println(sender->value); 
 }
 
 void buttonCallback(Control *sender, int type) {
+  int id = int(sender->id);
+  if(ButtonId0==id){
   switch (type) {
   case B_DOWN:
     Serial.println("Software reset!");
@@ -97,7 +106,8 @@ void buttonCallback(Control *sender, int type) {
   case B_UP:
     ESP.restart();
     break;
-  }
+  }}
+
 }
 
 
@@ -108,16 +118,25 @@ void switcherCallback(Control *sender, int value) {
     if(SwitchIdF==id){ FanFlag = true;}
     if(SwitchIdR==id){ RelayFlag = true;}
     if(SwitchIdC==id){ CompressorFlag = true;}
-
+    if(SwitchId1==id){TenthsFlag = true;}
+    if(SwitchId2==id){LockFlag = true;}
+    if(SwitchId3==id){DefreezeFlag = true;}
     break;
 
   case S_INACTIVE:
     if(SwitchIdF==id){ FanFlag = false;}
     if(SwitchIdR==id){ RelayFlag = false;}
     if(SwitchIdC==id){ CompressorFlag = false;}
-
+    if(SwitchId1==id){TenthsFlag = false;}
+    if(SwitchId2==id){LockFlag = false;}
+    if(SwitchId3==id){DefreezeFlag = false;}
     break;
   }
+}
+
+void selectCallback( Control* sender, int value ) {
+  Serial.println(sender->value);
+  DisplayUIFlag = (sender->value).toInt();
 }
 
 void numberCall( Control* sender, int type ) {
@@ -132,14 +151,11 @@ void numberCall( Control* sender, int type ) {
   if(id==NumberIdC3){CalibTemp_3 = data;}
   if(id==NumberIdC4){CalibTemp_4 = data;}
 
-  Serial.print(id);
-  Serial.print(" , Value: ");
-  Serial.println(data); 
 }
 
 void WebServer( void * parameter)
 {
-    Serial.println("WebServer");
+    if(Debug) Serial.println("WebServer");
 
     /*    #1 GUI oled control       #2 Buttons control    */
 
@@ -153,7 +169,8 @@ void WebServer( void * parameter)
 
     // not connected -> create hotspot
     if (WiFi.status() != WL_CONNECTED) {
-      Serial.print("\n\nCreating hotspot");
+      Serial.println("\n\nSmart Temperature Controller");
+      Serial.println("Loading");
 
       WiFi.mode(WIFI_AP);
       WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
@@ -162,7 +179,7 @@ void WebServer( void * parameter)
       int timeout = 5;
 
       do {
-        delay(500);
+        vTaskDelay(500/portTICK_PERIOD_MS);
         Serial.print(".");
         timeout--;
       } while (timeout);
@@ -171,43 +188,52 @@ void WebServer( void * parameter)
 
   dnsServer.start(DNS_PORT, "*", apIP);
 
-  Serial.println("\n\nWiFi parameters: Name - Controller");
+  Serial.println("\n\nWiFi parameters: Controller:12345678");
   Serial.print("Mode: ");
-  Serial.println(WiFi.getMode() == WIFI_AP ? "Station" : "Client");
+  Serial.println("Station");
   Serial.print("IP address: ");
   Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
 
   statusLabelId = ESPUI.addControl(ControlType::Label, "Status:", "Stop", ControlColor::Turquoise);
   millisLabelId = ESPUI.addControl(ControlType::Label, "UpTime:", "0.0 h", ControlColor::Carrot);
 
-  uint16_t tab1 = ESPUI.addControl(ControlType::Tab, "Light", "Light" );
-  uint16_t tab2 = ESPUI.addControl(ControlType::Tab, "Main", "Main" );
-  uint16_t tab3 = ESPUI.addControl(ControlType::Tab, "Additional", "Additional" );
+  uint16_t tab1 = ESPUI.addControl(ControlType::Tab, "Light&Display<br>Подсветка&Дисплей", "Light<br>Подсветка" );
+  uint16_t tab2 = ESPUI.addControl(ControlType::Tab, "Main<br>Основные", "Main<br>Основные" );
+  uint16_t tab3 = ESPUI.addControl(ControlType::Tab, "Additional<br>Дополнительные", "Additional<br>Дополнительные" );
 
-  SliderIdR = ESPUI.addControl(ControlType::Slider, "Red brightness", String(int(double(R_brightness)/2.55)), ControlColor::Alizarin, tab1, &sliderCallback);
-  SliderIdG = ESPUI.addControl(ControlType::Slider, "Blue brightness", String(int(double(G_brightness)/2.55)), ControlColor::Peterriver, tab1, &sliderCallback);
-  SliderIdB = ESPUI.addControl(ControlType::Slider, "Green brightness", String(int(double(B_brightness)/2.55)), ControlColor::Emerald, tab1, &sliderCallback);
-  SliderIdW = ESPUI.addControl(ControlType::Slider, "White brightness", String(int(double(W_brightness)/2.55)), ControlColor::None, tab1, &sliderCallback);
-  SliderIdBrt = ESPUI.addControl(ControlType::Slider, "Display brightness", String(int(double(contrast)/2.55)), ControlColor::Sunflower, tab1, &sliderCallback);
+  SliderIdR = ESPUI.addControl(ControlType::Slider, "Red brightness<br>Яркость красный", String(int(double(R_brightness)/2.55)), ControlColor::Alizarin, tab1, &sliderCallback);
+  SliderIdG = ESPUI.addControl(ControlType::Slider, "Blue brightness<br>Яркость синий", String(int(double(G_brightness)/2.55)), ControlColor::Peterriver, tab1, &sliderCallback);
+  SliderIdB = ESPUI.addControl(ControlType::Slider, "Green brightness<br>Яркость зеленый", String(int(double(B_brightness)/2.55)), ControlColor::Emerald, tab1, &sliderCallback);
+  SliderIdW = ESPUI.addControl(ControlType::Slider, "White brightness<br>Яркость белый", String(int(double(W_brightness)/2.55)), ControlColor::None, tab1, &sliderCallback);
+  SliderIdBrt = ESPUI.addControl(ControlType::Slider, "Display brightness *<br>Яркость экранаb *", String(int(double(contrast)/2.55)), ControlColor::Sunflower, tab1, &sliderCallback);
+  uint16_t select1 = ESPUI.addControl( ControlType::Select, "Display UI *<br>Вид главного экрана *", String(DisplayUIFlag), ControlColor::None, tab1, &selectCallback);
+  ESPUI.addControl(ControlType::Label, "* - Reload to save!<br>* - Для сохранения перезагрузите!", "", ControlColor::Alizarin, tab1);
+  ESPUI.addControl( ControlType::Option, "Option 1", "0", ControlColor::Alizarin, select1 );
+  ESPUI.addControl( ControlType::Option, "Option 2", "1", ControlColor::Alizarin, select1 );
+  ESPUI.addControl( ControlType::Option, "Option 3", "2", ControlColor::Alizarin, select1 );
 
-  NumberIdTW = ESPUI.addControl(ControlType::Number, "Compressor Work Time (Min):", "0", ControlColor::Alizarin, tab2, &numberCall);
-  NumberIdTD = ESPUI.addControl(ControlType::Number, "Defreeze Duration (Min):", "0", ControlColor::Alizarin, tab2, &numberCall);
-  NumberIdC0 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #0 (°C):", "0", ControlColor::Sunflower, tab2, &numberCall);
-  NumberIdC1 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #1 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
-  NumberIdC2 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #2 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
-  NumberIdC3 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #3 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
-  NumberIdC4 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #4 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  NumberIdTW = ESPUI.addControl(ControlType::Number, "Compressor Work Time<br>Время работы компрессора (Min)", "0", ControlColor::Alizarin, tab2, &numberCall);
+  NumberIdTD = ESPUI.addControl(ControlType::Number, "Defreeze Duration<br>Время оттайки (Min)", "0", ControlColor::Alizarin, tab2, &numberCall);
+  SwitchId1 = ESPUI.addControl(ControlType::Switcher, "Display tenths<br>Отображать десятые", "0", ControlColor::None, tab2, &switcherCallback);
+  NumberIdC0 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #0<br>Калибровка термодатчика #0 (°C):", "0", ControlColor::Sunflower, tab2, &numberCall);
+  NumberIdC1 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #1<br>Калибровка термодатчика #1 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  NumberIdC2 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #2<br>Калибровка термодатчика #2 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  NumberIdC3 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #3<br>Калибровка термодатчика #3 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
+  NumberIdC4 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #4<br>Калибровка термодатчика #4 (°C)", "0", ControlColor::Sunflower, tab2, &numberCall);
 
-  ESPUI.addControl(ControlType::Button, "Reboot Controller", "Reboot now", ControlColor::Alizarin, tab3, &buttonCallback);
-  SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Fan #1", "0", ControlColor::None, tab3, &switcherCallback);
-  SwitchIdR = ESPUI.addControl(ControlType::Switcher, "Relay #1", "0", ControlColor::None, tab3, &switcherCallback);
-  SwitchIdC = ESPUI.addControl(ControlType::Switcher, "Compressor #1", "0", ControlColor::None, tab3, &switcherCallback);
-  graphId = ESPUI.addControl(ControlType::Graph, "Graph Temperature", "0", ControlColor::Sunflower, tab3);
-  C0LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #0:", "", ControlColor::Turquoise, tab3); //TempSensor_0
-  C1LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #1:", "", ControlColor::Turquoise, tab3);
-  C2LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #2:", "", ControlColor::Turquoise, tab3);
-  C3LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #3:", "", ControlColor::Turquoise, tab3);
-  C4LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #4:", "", ControlColor::Turquoise, tab3);
+  ButtonId0 = ESPUI.addControl(ControlType::Button, "Reboot Controller<br>Перезагрузить", "Reboot now<br>Сейчас", ControlColor::Alizarin, tab3, &buttonCallback);
+  SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Fan<br>Вентилятор", "0", ControlColor::None, tab3, &switcherCallback);
+  SwitchIdR = ESPUI.addControl(ControlType::Switcher, "Relay<br>Доп. выход", "0", ControlColor::None, tab3, &switcherCallback);
+  SwitchIdC = ESPUI.addControl(ControlType::Switcher, "Compressor<br>Компрессор", "0", ControlColor::None, tab3, &switcherCallback);
+  SwitchId3 = ESPUI.addControl(ControlType::Switcher, "Defreeze<br>Оттайка", "0", ControlColor::None, tab3, &switcherCallback);
+  SwitchId2 = ESPUI.addControl(ControlType::Switcher, "Key lock<br>Блокировка кнопок", "0", ControlColor::None, tab3, &switcherCallback);
+  //ButtonId1 = ESPUI.addControl(ControlType::Button, "Clear graph<br>Очистить график", "Clear<br>Очистить", ControlColor::Alizarin, tab3, &buttonCallback);
+  C0LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #0<br>Термодатчик #0", "", ControlColor::Turquoise, tab3); //TempSensor_0
+  C1LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #1<br>Термодатчик #1", "", ControlColor::Turquoise, tab3);
+  C2LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #2<br>Термодатчик #2", "", ControlColor::Turquoise, tab3);
+  C3LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #3<br>Термодатчик #3", "", ControlColor::Turquoise, tab3);
+  C4LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #4<br>Термодатчик #4", "", ControlColor::Turquoise, tab3);
+  graphId = ESPUI.addControl(ControlType::Graph, "Graph Temperature (x10)", "0", ControlColor::Sunflower, tab3);
 
   //NumberIdTempTarg = ESPUI.number("Target Temperature", &numberCall, ControlColor::None, int(TargetTemp) , 0, 30);
   //ESPUI.button("Push Button", &buttonCallback, ControlColor::Peterriver, "Press");
@@ -240,6 +266,7 @@ void WebServer( void * parameter)
   ESPUI.updateControlValue(NumberIdC2, String(CalibTemp_2));
   ESPUI.updateControlValue(NumberIdC3, String(CalibTemp_3));
   ESPUI.updateControlValue(NumberIdC4, String(CalibTemp_4));
+  ESPUI.updateControlValue(SwitchId1, TenthsFlag ? "1" : "0");
 
     while(1){
 
@@ -253,7 +280,7 @@ void WebServer( void * parameter)
         Serial.println("Status: Stop");}
         
       ESPUI.updateControlValue(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
-      ESPUI.addGraphPoint(graphId, int(round(tempC)));
+      ESPUI.addGraphPoint(graphId, int(round(tempC*10)));
 
       //update stages
       ESPUI.updateControlValue(SwitchIdF, FanFlag ? "1" : "0");

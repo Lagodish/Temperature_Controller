@@ -24,6 +24,11 @@ int contrast = 0;
 int numberOfDevices = 0;
 int MinWorkComp = 0;
 int MinDefreeze = 0;
+int DisplayUIFlag = 0;
+uint8_t R_brightness = 0;
+uint8_t G_brightness = 0;
+uint8_t B_brightness = 0;
+uint8_t W_brightness = 0;
 
 bool FanFlag = false;
 bool DefreezeFlag = false;
@@ -31,14 +36,13 @@ bool RelayFlag = false;
 bool CompressorFlag = false;
 bool LightFlag = false;
 bool LockFlag = false;
+bool TenthsFlag = true;
 
 bool Warning = false;
+bool Debug = false;
 
 // Extern var.
-extern uint8_t R_brightness;
-extern uint8_t G_brightness;
-extern uint8_t B_brightness;
-extern uint8_t W_brightness;
+
 
 // Dev.
 OneWire oneWire(DS18B20);
@@ -51,7 +55,7 @@ void printAddress(DeviceAddress deviceAddress);
 
 void Storage( void * parameter)
 {
-    Serial.println("Storage task start!");
+    if(Debug) Serial.println("Storage task start!");
 
     /*    #1 Get data from flash storage    */
 
@@ -70,7 +74,9 @@ void Storage( void * parameter)
     G_brightness = preferences.getInt("G_brightness", 0);
     B_brightness = preferences.getInt("B_brightness", 0);
     W_brightness = preferences.getInt("W_brightness", 255);
+    DisplayUIFlag = preferences.getInt("DisplayUIFlag", 1);
     LockFlag = preferences.getBool("LockFlag", false);
+    TenthsFlag = preferences.getBool("TenthsFlag", true);
 
     preferences.end();
     vTaskDelay(100/portTICK_PERIOD_MS);
@@ -84,18 +90,20 @@ void Storage( void * parameter)
     int contrast_Old = contrast;
     int MinWorkComp_Old = MinWorkComp;
     int MinDefreeze_Old = MinDefreeze;
+    int DisplayUIFlag_old = DisplayUIFlag;
     uint8_t R_brightness_Old = R_brightness;
     uint8_t G_brightness_Old = G_brightness;
     uint8_t B_brightness_Old = B_brightness;
     uint8_t W_brightness_Old = W_brightness;
     bool LockFlag_Old = LockFlag;
+    bool TenthsFlag_old = TenthsFlag;
     
     while(1){
         
         //any change in var 
         if((LockFlag_Old != LockFlag)||(contrast_Old != contrast)||(R_brightness_Old != R_brightness)||(G_brightness_Old != G_brightness)||
         (B_brightness_Old != B_brightness)||(W_brightness_Old != W_brightness)||(MinWorkComp_Old != MinWorkComp)||(MinDefreeze_Old != MinDefreeze)||
-        (abs(TargetTemp_Old-TargetTemp)>0.1)||(abs(CalibTemp_0_Old - CalibTemp_0)>0.01)||
+        (abs(TargetTemp_Old-TargetTemp)>0.1)||(abs(CalibTemp_0_Old - CalibTemp_0)>0.01)||(TenthsFlag_old != TenthsFlag)||(DisplayUIFlag_old != DisplayUIFlag)||
         (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)
         ||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||(abs(CalibTemp_4_Old - CalibTemp_4)>0.01)){
 
@@ -113,6 +121,8 @@ void Storage( void * parameter)
             B_brightness_Old = B_brightness;
             W_brightness_Old = W_brightness;
             LockFlag_Old = LockFlag;
+            TenthsFlag_old = TenthsFlag;
+            DisplayUIFlag_old = DisplayUIFlag;
             
             preferences.begin("data-space", false);
             
@@ -128,12 +138,15 @@ void Storage( void * parameter)
             preferences.putInt("R_brightness", R_brightness);
             preferences.putInt("G_brightness", G_brightness);
             preferences.putInt("B_brightness", B_brightness);
+            preferences.putInt("DisplayUIFlag", DisplayUIFlag);
             preferences.putInt("W_brightness", W_brightness);
             preferences.putBool("LockFlag", LockFlag);
+            preferences.putBool("TenthsFlag", TenthsFlag);
+            
 
             preferences.end();
 
-            Serial.println("Data Updated!");
+            if(Debug) Serial.println("Data Updated!");
         }
 
         vTaskDelay(5000/portTICK_PERIOD_MS);
@@ -145,7 +158,7 @@ void Storage( void * parameter)
 
 void Light( void * parameter)
 {
-    Serial.println("Light task start!");
+    if(Debug) Serial.println("Light task start!");
 
     /*    #1 RGB led conrtol    #2 additional WRGB led    */
     //PWM setup
@@ -180,7 +193,7 @@ void Light( void * parameter)
 
 void Compressor( void * parameter)
 {
-    Serial.println("Compressor task start!");
+    if(Debug) Serial.println("Compressor task start!");
     
     /*    #1 Compressor freq. on/off control    */
     pinMode (Comp, OUTPUT);
@@ -199,7 +212,7 @@ void Compressor( void * parameter)
 
 void Ventilator( void * parameter)
 {
-    Serial.println("Ventilator task start!");
+    if(Debug) Serial.println("Ventilator task start!");
 
     /*    #1 Ventilator(s) speed(?) or on/off control    */
 
@@ -222,42 +235,37 @@ void Ventilator( void * parameter)
 
 void Sensors( void * parameter)
 {
-    Serial.println("Sensors task start!");
+    if(Debug) Serial.println("Sensors task start!");
 
     /*    #1 Open door switch get data    #2 Temp sersor(s) ds18b20 get data    */
 
     sensors.begin();
+    sensors.setResolution(10);
     // Grab a count of devices on the wire
-    numberOfDevices = 1 + sensors.getDeviceCount();
-    
+    numberOfDevices = 4;                                // !!!!!!!!!!!!!!!!!!!!!!!TODO WEB Number for sensors!
+    if(Debug) Serial.println(numberOfDevices);
     // Loop through each device, print out address
-    for(int i=0;i<numberOfDevices; i++){
+    for(int i=0;i<=numberOfDevices; i++){
         // Search the wire for address
         if(sensors.getAddress(tempDeviceAddress, i)){
-        Serial.print("Found device ");
-        Serial.print(i, DEC);
-        Serial.print(" with address: ");
+        if(Debug) Serial.print("Found device ");
+        if(Debug) Serial.print(i, DEC);
+        if(Debug) Serial.print(" with address: ");
         printAddress(tempDeviceAddress);
-        Serial.println();
+        if(Debug) Serial.println();
         } else {
-        Serial.print("Found ghost device at ");
-        Serial.print(i, DEC);
-        Serial.print(" but could not detect address. Check power and cabling");
+        if(Debug) Serial.print("Found ghost device at ");
+        if(Debug) Serial.print(i, DEC);
+        if(Debug) Serial.print(" but could not detect address. Check power and cabling");
         }
     }
 
     while(1){
-          sensors.requestTemperatures(); // Send the command to get temperatures
-  
+        sensors.requestTemperatures(); // Send the command to get temperatures
         // Loop through each device, print out temperature data
-        for(int i=0;i<numberOfDevices; i++){
+        for(int i=0;i<=numberOfDevices; i++){
             // Search the wire for address
-            if(sensors.getAddress(tempDeviceAddress, i)){
-                // Output the device ID
-                //Serial.print("Temperature for device: ");
-                //Serial.println(i,DEC);
-                // Print the data
-                double temp = sensors.getTempC(tempDeviceAddress);
+            double temp = double(sensors.getTempCByIndex(i));
                 if((temp>-50.0f)&&(temp<90.0f)){
                     tempC = temp;
 
@@ -267,17 +275,18 @@ void Sensors( void * parameter)
                     if(i==3) TempSensor_3 = temp;
                     if(i==4) TempSensor_4 = temp;
                 }
+                else{ if(Debug) Serial.println("Temp Sensor Error #1"); Warning = true;}             
 
             }
-        }
-    vTaskDelay(5000/portTICK_PERIOD_MS);
+        vTaskDelay(10000/portTICK_PERIOD_MS);
+        
     }
     vTaskDelete( NULL );
 }
 
 void Additional( void * parameter)
 {
-    Serial.println("Additional task start!");
+    if(Debug) Serial.println("Additional task start!");
 
     /*    #1 Additional tasks    */
 
@@ -292,7 +301,7 @@ void Additional( void * parameter)
 
 void printAddress(DeviceAddress deviceAddress) {
   for (uint8_t i = 0; i < 8; i++){
-    if (deviceAddress[i] < 16) Serial.print("0");
-      Serial.print(deviceAddress[i], HEX);
+    if (deviceAddress[i] < 16) if(Debug) Serial.print("0");
+      if(Debug) Serial.print(deviceAddress[i], HEX);
   }
 }
