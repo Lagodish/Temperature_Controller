@@ -300,7 +300,7 @@ void Sensors( void * parameter)
     while(1){
         sensors.requestTemperatures(); // Send the command to get temperatures
         // Loop through each device, print out temperature data
-        vTaskDelay(750/portTICK_PERIOD_MS);
+        vTaskDelay(800/portTICK_PERIOD_MS);
         for(int i=0;i<numberOfDevices; i++){
             // Search the wire for address
             float dataRes = double(sensors.getTempCByIndex(i));

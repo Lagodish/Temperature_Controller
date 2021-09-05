@@ -116,17 +116,18 @@ void Frame_3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(DSEG7_Classic_Regular_50);
-  display->drawString(100 + x, 8 + y, String(IntegerPart));
+  display->drawString(95 + x, 8 + y, String(IntegerPart));
 
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_16);
-  display->drawString(103 + x, 48 + y, "C"); 
-  display->drawCircle(101 + x, 49 + y, 2);
+  display->drawString(98 + x, 48 + y, "C"); 
+  display->drawCircle(96 + x, 49 + y, 2);
 
   if(TenthsFlag){
   display->setFont(DSEG7_Classic_Regular_15);
-  display->drawString(100 + x, 15 + y, String(DecimalPart));}
+  display->drawString(95 + x, 15 + y, String(DecimalPart));}
 
+  if(Warning) display->drawIco16x16(110 + x, 31 + y, warning_icon16x16);
 }
 
 void Frame_0(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {

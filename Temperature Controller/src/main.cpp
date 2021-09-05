@@ -17,7 +17,7 @@ void setup() {
 
   i2c_line = xSemaphoreCreateMutex();
   xTaskCreate(Storage, "Storage", 10000, NULL, 2, NULL);
-  xTaskCreate(Sensors, "Sensors", 8000, NULL, 1, NULL);
+  xTaskCreatePinnedToCore(Sensors, "Sensors", 8000, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(ClockRTC, "ClockRTC", 7000, NULL, 1, NULL, 1);
   xTaskCreate(Light, "Light", 5000, NULL, 1, NULL);
   xTaskCreate(Compressor, "Compressor", 5000, NULL, 1, NULL);
