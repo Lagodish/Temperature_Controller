@@ -6,7 +6,7 @@
 #include <pins_define.h>
 
 // Var.
-float tempC = 0.0f;
+double tempC = 0.0;
 
 double TargetTemp = 0.0;
 
@@ -20,6 +20,11 @@ double CalibTemp_1 = 0.0;
 double CalibTemp_2 = 0.0;
 double CalibTemp_3 = 0.0;
 double CalibTemp_4 = 0.0;
+
+double Zone_1 = 0.0;
+double Evaporator_1 = 0.0;
+double Zone_2 = 0.0;
+double Evaporator_2 = 0.0;
 
 int TempSensorLocation_0 = 0;
 int TempSensorLocation_1 = 0;
@@ -38,6 +43,7 @@ uint8_t B_brightness = 0;
 uint8_t W_brightness = 0;
 uint8_t HourNow = 0;
 uint8_t MinNow = 0;
+int warnCount = 0;
 
 bool FanFlag = false;
 bool DefreezeFlag = false;
@@ -48,7 +54,7 @@ bool LockFlag = false;
 bool TenthsFlag = true;
 
 bool Warning = false;
-bool Debug = true;
+bool Debug = false;
 bool ChangesToSaveFlag = false; //TODO Logic use!
 
 // Extern.
@@ -62,7 +68,6 @@ Preferences preferences;
 RTC_DS3231 rtc;
 
 // function to print a device address
-void printAddress(DeviceAddress deviceAddress);
 
 void Storage( void * parameter)
 {
@@ -234,9 +239,7 @@ void Compressor( void * parameter)
     /*    #1 Compressor freq. on/off control    */
     pinMode (Comp, OUTPUT);
     while(1){
-        if(TargetTemp<tempC) CompressorFlag = true;
-        else CompressorFlag = false;
-        
+         
         digitalWrite(Comp, CompressorFlag);
 
         vTaskDelay(5000/portTICK_PERIOD_MS);
@@ -277,23 +280,6 @@ void Sensors( void * parameter)
 
     sensors.begin();
     sensors.setResolution(12);
-    // Grab a count of devices on the wire
-    //numberOfDevices = 4;                                // !!!!!!!!!!!!!!!!!!!!!!!TODO Storage save!
-    // Loop through each device, print out address
-    for(int i=0;i<numberOfDevices; i++){
-        // Search the wire for address
-        if(sensors.getAddress(tempDeviceAddress, i)){
-        if(Debug) Serial.print("Found device ");
-        if(Debug) Serial.print(i, DEC);
-        if(Debug) Serial.print(" with address: ");
-        printAddress(tempDeviceAddress);
-        if(Debug) Serial.println();
-        } else {
-        if(Debug) Serial.print("Found ghost device at ");
-        if(Debug) Serial.print(i, DEC);
-        if(Debug) Serial.print(" but could not detect address. Check power and cabling");
-        }
-    }
     
     while(1){
         sensors.requestTemperatures(); // Send the command to get temperatures
@@ -303,22 +289,20 @@ void Sensors( void * parameter)
             // Search the wire for address
             float dataRes = double(sensors.getTempCByIndex(i));
             if(dataRes==DEVICE_DISCONNECTED_C||dataRes==DEVICE_DISCONNECTED_RAW||(dataRes==85)){
-            Warning = true;
+            warnCount++;
+
             if(Debug){
                 Serial.print(i);
                 Serial.print("# WARNING! DS18B20 - ");
                 Serial.println(dataRes);
             }
             }else{
-                    tempC = dataRes;    //TODO Fix temp logic!
-                        
+
                     if(i==0) TempSensor_0 = dataRes;
                     if(i==1) TempSensor_1 = dataRes;
                     if(i==2) TempSensor_2 = dataRes;
                     if(i==3) TempSensor_3 = dataRes;
-                    if(i==4) TempSensor_4 = dataRes;
-               // }
-                //else{ if(Debug) Serial.println("Temp out of range!"); Warning = true;}             
+                    if(i==4) TempSensor_4 = dataRes;       
             }
         }
         vTaskDelay(10000/portTICK_PERIOD_MS);
@@ -327,17 +311,85 @@ void Sensors( void * parameter)
     vTaskDelete( NULL );
 }
 
+void Check( void * parameter)
+{
+    if(Debug) Serial.println("Check task start!");
+
+    /*    #1 Additional tasks    */
+
+    while(1){
+        if(Warning)
+            Serial.println("######### WARNING #########");
+        
+        if(warnCount>3)
+            Warning = true;
+        else
+        warnCount = 0;
+
+        vTaskDelay(30000/portTICK_PERIOD_MS);
+
+    }
+    
+    vTaskDelete( NULL );
+}
+
+
 void Additional( void * parameter)
 {
     if(Debug) Serial.println("Additional task start!");
 
     /*    #1 Additional tasks    */
 
+    vTaskDelay(5000/portTICK_PERIOD_MS);
+
     while(1){
-        if(Warning){
-            Serial.println("######### WARNING #########");
-        }
-        vTaskDelay(30000/portTICK_PERIOD_MS);
+
+        uint8_t Z1Count = 0;
+        uint8_t Z2Count = 0;
+        uint8_t E1Count = 0;
+        uint8_t E2Count = 0;
+        
+        double TempZone_1 = 0.0;
+        double TempEvaporator_1 = 0.0;
+        double TempZone_2 = 0.0;
+        double TempEvaporator_2 = 0.0;
+
+    if(TempSensor_0!=0.0){
+        if(TempSensorLocation_0==0){TempEvaporator_1 += TempSensor_0-CalibTemp_0; E1Count++;}
+        if(TempSensorLocation_0==1){TempZone_1 += TempSensor_0-CalibTemp_0; Z1Count++;}
+        if(TempSensorLocation_0==2){TempEvaporator_2 += TempSensor_0-CalibTemp_0; E2Count++;}
+        if(TempSensorLocation_0==3){TempZone_2 += TempSensor_0-CalibTemp_0; Z2Count++;}}
+    if(TempSensor_1!=0.0){
+        if(TempSensorLocation_1==0){TempEvaporator_1 += TempSensor_1-CalibTemp_1; E1Count++;}
+        if(TempSensorLocation_1==1){TempZone_1 += TempSensor_1-CalibTemp_1; Z1Count++;}
+        if(TempSensorLocation_1==2){TempEvaporator_2 += TempSensor_1-CalibTemp_1; E2Count++;}
+        if(TempSensorLocation_1==3){TempZone_2 += TempSensor_1-CalibTemp_1; Z2Count++;}}
+    if(TempSensor_2!=0.0){
+        if(TempSensorLocation_2==0){TempEvaporator_1 += TempSensor_2-CalibTemp_2; E1Count++;}
+        if(TempSensorLocation_2==1){TempZone_1 += TempSensor_2-CalibTemp_2; Z1Count++;}
+        if(TempSensorLocation_2==2){TempEvaporator_2 += TempSensor_2-CalibTemp_2; E2Count++;}
+        if(TempSensorLocation_2==3){TempZone_2 += TempSensor_2-CalibTemp_2; Z2Count++;}}
+    if(TempSensor_3!=0.0){
+        if(TempSensorLocation_3==0){TempEvaporator_1 += TempSensor_3-CalibTemp_3; E1Count++;}
+        if(TempSensorLocation_3==1){TempZone_1 += TempSensor_3-CalibTemp_3; Z1Count++;}
+        if(TempSensorLocation_3==2){TempEvaporator_2 += TempSensor_3-CalibTemp_3; E2Count++;}
+        if(TempSensorLocation_3==3){TempZone_2 += TempSensor_3-CalibTemp_3; Z2Count++;}}
+    if(TempSensor_4!=0.0){
+        if(TempSensorLocation_4==0){TempEvaporator_1 += TempSensor_4-CalibTemp_4; E1Count++;}
+        if(TempSensorLocation_4==1){TempZone_1 += TempSensor_4-CalibTemp_4; Z1Count++;}
+        if(TempSensorLocation_4==2){TempEvaporator_2 += TempSensor_4-CalibTemp_4; E2Count++;}
+        if(TempSensorLocation_4==3){TempZone_2 += TempSensor_4-CalibTemp_4; Z2Count++;}}
+
+
+        Zone_1 = TempZone_1/Z1Count;
+        Zone_2 = TempZone_2/Z2Count;  
+        Evaporator_1 = TempEvaporator_1/E1Count;
+        Evaporator_2 = TempEvaporator_2/E2Count;
+
+        //TODO Show Temp NOW or Target Temp
+        if(Z1Count != 0) tempC = Zone_1;
+
+        vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
     
@@ -348,21 +400,18 @@ void ClockRTC( void * parameter)
 {
     if(Debug) Serial.println("ClockRTC task start!");
 
-    /*    #1 Additional tasks    */
+    /*    #1 ClockRTC tasks    */
     xSemaphoreTake(i2c_line, portMAX_DELAY);
     Wire.setPins(21,22);
-    //Wire.begin(21,22,400000);
+    
     if (! rtc.begin()) {
     Warning = true;
-    Serial.println("Error RTC!");
+    if(Debug) Serial.println("Error RTC!");
     }
  
     if (rtc.lostPower()) {
-    Serial.println("RTC lost power, let's set the time!");
+    if(Debug) Serial.println("RTC lost power, let's set the time!");
     Warning = true;
-    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    // This line sets the RTC with an explicit date & time, for example to set
-    // January 21, 2014 at 3am you would call:
     //rtc.adjust(DateTime(2021, 9, 4, 20, 0, 0));
     }
 
@@ -378,11 +427,4 @@ void ClockRTC( void * parameter)
     }
     
     vTaskDelete( NULL );
-}
-
-void printAddress(DeviceAddress deviceAddress) {
-  for (uint8_t i = 0; i < 8; i++){
-    if (deviceAddress[i] < 16) if(Debug) Serial.print("0");
-      if(Debug) Serial.print(deviceAddress[i], HEX);
-  }
 }

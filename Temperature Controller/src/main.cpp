@@ -23,6 +23,7 @@ void setup() {
   xTaskCreate(Compressor, "Compressor", 5000, NULL, 1, NULL);
   xTaskCreate(Ventilator, "Ventilator", 5000, NULL, 1, NULL);
   xTaskCreate(Additional, "Additional", 5000, NULL, 1, NULL);
+  xTaskCreate(Check, "Check", 5000, NULL, 1, NULL);
   xTaskCreatePinnedToCore(GUI, "GUI", 10000, NULL, 1, NULL, 1);
   xTaskCreate(WebServer, "WebServer", 7000, NULL, 1, NULL);
 

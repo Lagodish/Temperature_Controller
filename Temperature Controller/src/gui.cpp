@@ -10,7 +10,7 @@
 #include "GUI/iconset.h"
 
 // Extern var.
-extern float tempC;
+extern double tempC;
 extern int contrast;
 extern int DisplayUIFlag;
 extern bool FanFlag;
@@ -164,7 +164,7 @@ void GUI( void * parameter)
 
     ui.setFrames(frames, frameCount);
     ui.setOverlays(overlays, overlaysCount);
-    ui.setFrameAnimation(SLIDE_LEFT);
+    //ui.setFrameAnimation(SLIDE_LEFT);
     ui.switchToFrame(DisplayUIFlag);
     ui.init();
     //display.flipScreenVertically();

@@ -139,7 +139,7 @@ void setup() {
 
   // You can change the transition that is used
   // SLIDE_LEFT, SLIDE_RIGHT, SLIDE_UP, SLIDE_DOWN
-  ui.setFrameAnimation(SLIDE_LEFT);
+  //ui.setFrameAnimation(SLIDE_LEFT);
 
   // Add frames
   ui.setFrames(frames, frameCount);
