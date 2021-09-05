@@ -348,46 +348,46 @@ void Additional( void * parameter)
         uint8_t Z2Count = 0;
         uint8_t E1Count = 0;
         uint8_t E2Count = 0;
-        
         double TempZone_1 = 0.0;
         double TempEvaporator_1 = 0.0;
         double TempZone_2 = 0.0;
         double TempEvaporator_2 = 0.0;
 
-    if(TempSensor_0!=0.0){
-        if(TempSensorLocation_0==0){TempEvaporator_1 += TempSensor_0-CalibTemp_0; E1Count++;}
-        if(TempSensorLocation_0==1){TempZone_1 += TempSensor_0-CalibTemp_0; Z1Count++;}
-        if(TempSensorLocation_0==2){TempEvaporator_2 += TempSensor_0-CalibTemp_0; E2Count++;}
-        if(TempSensorLocation_0==3){TempZone_2 += TempSensor_0-CalibTemp_0; Z2Count++;}}
-    if(TempSensor_1!=0.0){
-        if(TempSensorLocation_1==0){TempEvaporator_1 += TempSensor_1-CalibTemp_1; E1Count++;}
-        if(TempSensorLocation_1==1){TempZone_1 += TempSensor_1-CalibTemp_1; Z1Count++;}
-        if(TempSensorLocation_1==2){TempEvaporator_2 += TempSensor_1-CalibTemp_1; E2Count++;}
-        if(TempSensorLocation_1==3){TempZone_2 += TempSensor_1-CalibTemp_1; Z2Count++;}}
-    if(TempSensor_2!=0.0){
-        if(TempSensorLocation_2==0){TempEvaporator_1 += TempSensor_2-CalibTemp_2; E1Count++;}
-        if(TempSensorLocation_2==1){TempZone_1 += TempSensor_2-CalibTemp_2; Z1Count++;}
-        if(TempSensorLocation_2==2){TempEvaporator_2 += TempSensor_2-CalibTemp_2; E2Count++;}
-        if(TempSensorLocation_2==3){TempZone_2 += TempSensor_2-CalibTemp_2; Z2Count++;}}
-    if(TempSensor_3!=0.0){
-        if(TempSensorLocation_3==0){TempEvaporator_1 += TempSensor_3-CalibTemp_3; E1Count++;}
-        if(TempSensorLocation_3==1){TempZone_1 += TempSensor_3-CalibTemp_3; Z1Count++;}
-        if(TempSensorLocation_3==2){TempEvaporator_2 += TempSensor_3-CalibTemp_3; E2Count++;}
-        if(TempSensorLocation_3==3){TempZone_2 += TempSensor_3-CalibTemp_3; Z2Count++;}}
-    if(TempSensor_4!=0.0){
-        if(TempSensorLocation_4==0){TempEvaporator_1 += TempSensor_4-CalibTemp_4; E1Count++;}
-        if(TempSensorLocation_4==1){TempZone_1 += TempSensor_4-CalibTemp_4; Z1Count++;}
-        if(TempSensorLocation_4==2){TempEvaporator_2 += TempSensor_4-CalibTemp_4; E2Count++;}
-        if(TempSensorLocation_4==3){TempZone_2 += TempSensor_4-CalibTemp_4; Z2Count++;}}
+        if(TempSensor_0!=0.0){
+            if(TempSensorLocation_0==0){TempEvaporator_1 += TempSensor_0+CalibTemp_0; E1Count++;}
+            if(TempSensorLocation_0==1){TempZone_1 += TempSensor_0+CalibTemp_0; Z1Count++;}
+            if(TempSensorLocation_0==2){TempEvaporator_2 += TempSensor_0+CalibTemp_0; E2Count++;}
+            if(TempSensorLocation_0==3){TempZone_2 += TempSensor_0+CalibTemp_0; Z2Count++;}}
+        if(TempSensor_1!=0.0){
+            if(TempSensorLocation_1==0){TempEvaporator_1 += TempSensor_1+CalibTemp_1; E1Count++;}
+            if(TempSensorLocation_1==1){TempZone_1 += TempSensor_1+CalibTemp_1; Z1Count++;}
+            if(TempSensorLocation_1==2){TempEvaporator_2 += TempSensor_1+CalibTemp_1; E2Count++;}
+            if(TempSensorLocation_1==3){TempZone_2 += TempSensor_1+CalibTemp_1; Z2Count++;}}
+        if(TempSensor_2!=0.0){
+            if(TempSensorLocation_2==0){TempEvaporator_1 += TempSensor_2+CalibTemp_2; E1Count++;}
+            if(TempSensorLocation_2==1){TempZone_1 += TempSensor_2+CalibTemp_2; Z1Count++;}
+            if(TempSensorLocation_2==2){TempEvaporator_2 += TempSensor_2+CalibTemp_2; E2Count++;}
+            if(TempSensorLocation_2==3){TempZone_2 += TempSensor_2+CalibTemp_2; Z2Count++;}}
+        if(TempSensor_3!=0.0){
+            if(TempSensorLocation_3==0){TempEvaporator_1 += TempSensor_3+CalibTemp_3; E1Count++;}
+            if(TempSensorLocation_3==1){TempZone_1 += TempSensor_3+CalibTemp_3; Z1Count++;}
+            if(TempSensorLocation_3==2){TempEvaporator_2 += TempSensor_3+CalibTemp_3; E2Count++;}
+            if(TempSensorLocation_3==3){TempZone_2 += TempSensor_3+CalibTemp_3; Z2Count++;}}
+        if(TempSensor_4!=0.0){
+            if(TempSensorLocation_4==0){TempEvaporator_1 += TempSensor_4+CalibTemp_4; E1Count++;}
+            if(TempSensorLocation_4==1){TempZone_1 += TempSensor_4+CalibTemp_4; Z1Count++;}
+            if(TempSensorLocation_4==2){TempEvaporator_2 += TempSensor_4+CalibTemp_4; E2Count++;}
+            if(TempSensorLocation_4==3){TempZone_2 += TempSensor_4+CalibTemp_4; Z2Count++;}}
 
+        if(Z1Count != 0) Zone_1 = TempZone_1/Z1Count;
+        if(Z2Count != 0) Zone_2 = TempZone_2/Z2Count;  
+        if(E1Count != 0) Evaporator_1 = TempEvaporator_1/E1Count;
+        if(E2Count != 0) Evaporator_2 = TempEvaporator_2/E2Count;
 
-        Zone_1 = TempZone_1/Z1Count;
-        Zone_2 = TempZone_2/Z2Count;  
-        Evaporator_1 = TempEvaporator_1/E1Count;
-        Evaporator_2 = TempEvaporator_2/E2Count;
-
+        if(Debug) Serial.println("Z1:" + String(Zone_1) + " Z2:" + String(Zone_2) + " E1:" + String(Evaporator_1) + " E2:"+String(Evaporator_2));
+        
         //TODO Show Temp NOW or Target Temp
-        if(Z1Count != 0) tempC = Zone_1;
+        tempC = Zone_1;
 
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
