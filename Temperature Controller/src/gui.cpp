@@ -24,7 +24,7 @@ extern bool DefreezeFlag;
 extern uint8_t HourNow;
 extern uint8_t MinNow;
 extern bool Warning;
-extern bool SensorReadyFlag;
+
 // Extern.
 extern SemaphoreHandle_t i2c_line;
 
@@ -38,9 +38,9 @@ SH1106Wire display(0x3c, 21, 22, GEOMETRY_128_64, I2C_ONE, 400000); //set I2C fr
 OLEDDisplayUi ui     ( &display );
 
 void msOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
-  display->setTextAlignment(TEXT_ALIGN_LEFT);
-  display->setFont(ArialMT_Plain_10);
-  display->drawString(0, 0, "UpTime: "+String(float(millis())/(60 * 60 * 1000))+"h");
+  //display->setTextAlignment(TEXT_ALIGN_LEFT);
+  //display->setFont(ArialMT_Plain_10);
+  //display->drawString(0, 0, "UpTime: "+String(float(millis())/(60 * 60 * 1000))+"h");
 
   String Time = "";
   if(HourNow<10){Time="0"+String(HourNow);}
@@ -132,7 +132,15 @@ void Frame_3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t
 
 void Frame_0(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
 
-  display->drawXbm(34, 14, WiFi_Logo_width, WiFi_Logo_height, WiFi_Logo_bits);
+  display->drawXbm(34, 0, WiFi_Logo_width, WiFi_Logo_height, WiFi_Logo_bits);
+  
+  display->setFont(ArialMT_Plain_10);
+  display->setTextAlignment(TEXT_ALIGN_CENTER);
+  display->drawString(64 + x, 32 + y, "Connect to Controller!");
+  display->drawString(64 + x, 42 + y, "WiFi - Controller:12345678");
+  display->drawString(64 + x, 52 + y, "http://192.168.1.1/");
+  display->setTextAlignment(TEXT_ALIGN_LEFT);
+  display->drawString(0 + x, 0 + y, "Settings");
 
 }
 
@@ -156,29 +164,26 @@ void GUI( void * parameter)
 
     ui.setFrames(frames, frameCount);
     ui.setOverlays(overlays, overlaysCount);
-    ui.init();
+    ui.setFrameAnimation(SLIDE_LEFT);
     ui.switchToFrame(DisplayUIFlag);
+    ui.init();
     //display.flipScreenVertically();
-
-    //uint8_t oldData = 0;
-    //if(oldData!=contrast){oldData=contrast; display.setBrightness(contrast);}
     display.setBrightness(contrast);
-
-    delay(100);
     xSemaphoreGive(i2c_line);
     
+    uint8_t oldData = contrast;
     int remainingTimeBudget = 0;
+    int switchToFrameFlag = DisplayUIFlag;
     
     while(1){
         xSemaphoreTake(i2c_line, portMAX_DELAY);
         remainingTimeBudget = ui.update();
-
-        //if(SensorReadyFlag) ui.switchToFrame(3);
-        //else ui.switchToFrame(DisplayUIFlag);
-    
-   
-        if (remainingTimeBudget > 0){xSemaphoreGive(i2c_line); vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); }
-
+        if(switchToFrameFlag != DisplayUIFlag){switchToFrameFlag = DisplayUIFlag; ui.switchToFrame(DisplayUIFlag);}
+        if(oldData!=contrast){oldData=contrast; display.setBrightness(contrast);}
+        xSemaphoreGive(i2c_line);
+        if (remainingTimeBudget > 0){
+          vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS);}
+        
     }
     
     vTaskDelete( NULL );

@@ -63,7 +63,7 @@ uint8_t C1LabelId=0;
 uint8_t C2LabelId=0;
 uint8_t C3LabelId=0;
 uint8_t C4LabelId=0;
-uint8_t graphId=0;
+//uint8_t graphId=0;
 uint8_t millisLabelId=0;
 uint8_t SwitchIdF=0;
 uint8_t SwitchIdC=0;
@@ -226,12 +226,12 @@ void WebServer( void * parameter)
   SliderIdG = ESPUI.addControl(ControlType::Slider, "Blue brightness<br>Яркость синий", String(int(double(G_brightness)/2.55)), ControlColor::Peterriver, tab1, &sliderCallback);
   SliderIdB = ESPUI.addControl(ControlType::Slider, "Green brightness<br>Яркость зеленый", String(int(double(B_brightness)/2.55)), ControlColor::Emerald, tab1, &sliderCallback);
   SliderIdW = ESPUI.addControl(ControlType::Slider, "White brightness<br>Яркость белый", String(int(double(W_brightness)/2.55)), ControlColor::None, tab1, &sliderCallback);
-  SliderIdBrt = ESPUI.addControl(ControlType::Slider, "Display brightness *<br>Яркость экрана *", String(int(double(contrast)/2.55)), ControlColor::Sunflower, tab1, &sliderCallback);
-  select5 = ESPUI.addControl( ControlType::Select, "Display UI *<br>Вид главного экрана *", String(DisplayUIFlag), ControlColor::None, tab1, &selectCallback);
-  ESPUI.addControl(ControlType::Label, "* - Reload to save!<br>* - Для сохранения перезагрузите!", "", ControlColor::Alizarin, tab1);
-  ESPUI.addControl( ControlType::Option, "Option 1", "0", ControlColor::Alizarin, select5);
-  ESPUI.addControl( ControlType::Option, "Option 2", "1", ControlColor::Alizarin, select5);
-  ESPUI.addControl( ControlType::Option, "Option 3", "2", ControlColor::Alizarin, select5);
+  SliderIdBrt = ESPUI.addControl(ControlType::Slider, "Display brightness<br>Яркость экрана", String(int(double(contrast)/2.55)), ControlColor::Sunflower, tab1, &sliderCallback);
+  select5 = ESPUI.addControl( ControlType::Select, "Display UI<br>Вид главного экрана", String(DisplayUIFlag), ControlColor::None, tab1, &selectCallback);
+  ESPUI.addControl( ControlType::Option, "Temperature / Температура", "0", ControlColor::Alizarin, select5);
+  ESPUI.addControl( ControlType::Option, "Temp&Icons / Темп. и значки", "1", ControlColor::Alizarin, select5);
+  ESPUI.addControl( ControlType::Option, "Temp&Icons+ / Темп. и значки+", "2", ControlColor::Alizarin, select5);
+  ESPUI.addControl( ControlType::Option, "Picture / Картинка", "3", ControlColor::Sunflower, select5);
 
   NumberIdTW = ESPUI.addControl(ControlType::Number, "Compressor Work Time<br>Время работы компрессора (Min)", String(MinWorkComp), ControlColor::Alizarin, tab2, &numberCall);
   NumberIdTD = ESPUI.addControl(ControlType::Number, "Defreeze Duration<br>Время оттайки (Min)", String(MinDefreeze), ControlColor::Peterriver, tab2, &numberCall);
@@ -280,7 +280,7 @@ void WebServer( void * parameter)
   C2LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #2<br>Термодатчик #2", "", ControlColor::Turquoise, tab3);
   C3LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #3<br>Термодатчик #3", "", ControlColor::Turquoise, tab3);
   C4LabelId = ESPUI.addControl(ControlType::Label, "Temperature Sensor #4<br>Термодатчик #4", "", ControlColor::Turquoise, tab3);
-  graphId = ESPUI.addControl(ControlType::Graph, "Graph Temperature (x10)", "0", ControlColor::Sunflower, tab3);
+  //graphId = ESPUI.addControl(ControlType::Graph, "Graph Temperature (x10)", "0", ControlColor::Sunflower, tab3);
 
   //NumberIdTempTarg = ESPUI.number("Target Temperature", &numberCall, ControlColor::None, int(TargetTemp) , 0, 30);
   //ESPUI.button("Push Button", &buttonCallback, ControlColor::Peterriver, "Press");
@@ -304,7 +304,16 @@ void WebServer( void * parameter)
 
 
   ESPUI.begin("Temperature Controller","admin","admin");
-  ESPUI.clearGraph(graphId);
+  //ESPUI.clearGraph(graphId);
+
+  bool FFOld = false;
+  bool RFOld = false;
+  bool CFOld = false; 
+  double TempOld_0 = 0;
+  double TempOld_1 = 0;
+  double TempOld_2 = 0;
+  double TempOld_3 = 0;
+  double TempOld_4 = 0;
 
     while(1){
 
@@ -318,18 +327,17 @@ void WebServer( void * parameter)
         Serial.println("Status: Stop");}
         
       ESPUI.updateControlValue(millisLabelId, String(float(millis())/(60 * 60 * 1000))+" h");
-      ESPUI.addGraphPoint(graphId, int(round(tempC*10)));
+      //ESPUI.addGraphPoint(graphId, int(round(tempC*10)));
 
       //update stages
-      ESPUI.updateControlValue(SwitchIdF, FanFlag ? "1" : "0");
-      ESPUI.updateControlValue(SwitchIdR, RelayFlag ? "1" : "0");
-      ESPUI.updateControlValue(SwitchIdC, CompressorFlag ? "1" : "0");
-    
-      ESPUI.updateControlValue(C0LabelId, String(TempSensor_0)+" °C");
-      ESPUI.updateControlValue(C1LabelId, String(TempSensor_1)+" °C");
-      ESPUI.updateControlValue(C2LabelId, String(TempSensor_2)+" °C");
-      ESPUI.updateControlValue(C3LabelId, String(TempSensor_3)+" °C");
-      ESPUI.updateControlValue(C4LabelId, String(TempSensor_4)+" °C");
+      if(FFOld != FanFlag){FFOld = FanFlag; ESPUI.updateControlValue(SwitchIdF, FanFlag ? "1" : "0");}
+      if(RFOld != RelayFlag){RFOld = RelayFlag; ESPUI.updateControlValue(SwitchIdR, RelayFlag ? "1" : "0");}
+      if(CFOld != CompressorFlag){CFOld = CompressorFlag; ESPUI.updateControlValue(SwitchIdC, CompressorFlag ? "1" : "0");}
+      if(TempOld_0!= TempSensor_0){TempOld_0 = TempSensor_0; ESPUI.updateControlValue(C0LabelId, String(TempSensor_0)+" °C");}
+      if(TempOld_1 != TempSensor_1){TempOld_1 = TempSensor_1; ESPUI.updateControlValue(C1LabelId, String(TempSensor_1)+" °C");}
+      if(TempOld_2 != TempSensor_2){TempOld_2 = TempSensor_2; ESPUI.updateControlValue(C2LabelId, String(TempSensor_2)+" °C");}
+      if(TempOld_3 != TempSensor_3){TempOld_3 = TempSensor_3; ESPUI.updateControlValue(C3LabelId, String(TempSensor_3)+" °C");}
+      if(TempOld_4 != TempSensor_4){TempOld_4 = TempSensor_4; ESPUI.updateControlValue(C4LabelId, String(TempSensor_4)+" °C");}
 
       vTaskDelay(3000/portTICK_PERIOD_MS);
     }

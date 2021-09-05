@@ -38,7 +38,6 @@ uint8_t B_brightness = 0;
 uint8_t W_brightness = 0;
 uint8_t HourNow = 0;
 uint8_t MinNow = 0;
-int warn_count = 0;
 
 bool FanFlag = false;
 bool DefreezeFlag = false;
@@ -48,9 +47,8 @@ bool LightFlag = false;
 bool LockFlag = false;
 bool TenthsFlag = true;
 
-bool SensorReadyFlag = false;
 bool Warning = false;
-bool Debug = false;
+bool Debug = true;
 bool ChangesToSaveFlag = false; //TODO Logic use!
 
 // Extern.
@@ -305,12 +303,10 @@ void Sensors( void * parameter)
             // Search the wire for address
             float dataRes = double(sensors.getTempCByIndex(i));
             if(dataRes==DEVICE_DISCONNECTED_C||dataRes==DEVICE_DISCONNECTED_RAW||(dataRes==85)){
-            SensorReadyFlag = false;
-            warn_count++;
-            if(warn_count>5){Warning = true;}
-            if(!Debug){
+            Warning = true;
+            if(Debug){
                 Serial.print(i);
-                Serial.print("# WARNING! - ");
+                Serial.print("# WARNING! DS18B20 - ");
                 Serial.println(dataRes);
             }
             }else{
@@ -321,7 +317,6 @@ void Sensors( void * parameter)
                     if(i==2) TempSensor_2 = dataRes;
                     if(i==3) TempSensor_3 = dataRes;
                     if(i==4) TempSensor_4 = dataRes;
-                    SensorReadyFlag = true;
                // }
                 //else{ if(Debug) Serial.println("Temp out of range!"); Warning = true;}             
             }
@@ -341,9 +336,8 @@ void Additional( void * parameter)
     while(1){
         if(Warning){
             Serial.println("######### WARNING #########");
-            warn_count = 0;
         }
-        vTaskDelay(60000/portTICK_PERIOD_MS);
+        vTaskDelay(30000/portTICK_PERIOD_MS);
 
     }
     
