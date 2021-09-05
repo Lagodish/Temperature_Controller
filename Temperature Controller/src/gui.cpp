@@ -1,6 +1,6 @@
 #include <Arduino.h> 
-//#include "SSD1306Wire.h"
-#include "SH1106Wire.h"
+#include "Wire.h"
+#include "SH1106.h"
 // Include the UI lib
 #include "OLEDDisplayUi.h"
 
@@ -23,6 +23,7 @@ extern bool TenthsFlag;
 extern bool DefreezeFlag;
 extern uint8_t HourNow;
 extern uint8_t MinNow;
+extern bool SensorReadyFlag;
 // Extern.
 extern SemaphoreHandle_t i2c_line;
 
@@ -126,9 +127,16 @@ void Frame_3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t
 
 }
 
-FrameCallback frames[] = {Frame_3, Frame_2, Frame_1};
+void Frame_0(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
 
-int frameCount = 3;
+  display->drawXbm(34, 14, WiFi_Logo_width, WiFi_Logo_height, WiFi_Logo_bits);
+
+}
+
+//TODO WiFi Frame and set mode and normal mode!
+FrameCallback frames[] = {Frame_3, Frame_2, Frame_1, Frame_0};
+
+int frameCount = 4;
 OverlayCallback overlays[] = { msOverlay };
 int overlaysCount = 1;
 
@@ -154,6 +162,11 @@ void GUI( void * parameter)
     display.setBrightness(contrast);
     xSemaphoreGive(i2c_line);
 
+    while (SensorReadyFlag)
+    {
+      vTaskDelay(500/portTICK_PERIOD_MS);
+    }
+    
     int remainingTimeBudget = 0;
     
     while(1){
@@ -162,7 +175,7 @@ void GUI( void * parameter)
        // Serial.print("Delay: ");
        // Serial.println(remainingTimeBudget);
         
-        if (remainingTimeBudget > 0){xSemaphoreGive(i2c_line);  vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); }
+        if (remainingTimeBudget > 0){xSemaphoreGive(i2c_line); vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); }
 
     }
     

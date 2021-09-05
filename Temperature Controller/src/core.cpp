@@ -47,8 +47,10 @@ bool LightFlag = false;
 bool LockFlag = false;
 bool TenthsFlag = true;
 
+bool SensorReadyFlag = false;
 bool Warning = false;
 bool Debug = false;
+bool ChangesToSaveFlag = false; //TODO Logic use!
 
 // Extern.
 extern SemaphoreHandle_t i2c_line;
@@ -70,13 +72,9 @@ void Storage( void * parameter)
     /*    #1 Get data from flash storage    */
 
     preferences.begin("data-space", false);
-
-    TargetTemp = preferences.getDouble("TargetTemp", 10.0);
-    CalibTemp_0 = preferences.getDouble("CalTemp_0", 0.0);
-    CalibTemp_1 = preferences.getDouble("CalTemp_1", 0.0);
-    CalibTemp_2 = preferences.getDouble("CalTemp_2", 0.0);
-    CalibTemp_3 = preferences.getDouble("CalTemp_3", 0.0);
-    CalibTemp_4 = preferences.getDouble("CalTemp_4", 0.0);
+    //preferences.clear();
+    delay(500);
+    
     contrast = preferences.getInt("contrast", 110);
     MinWorkComp = preferences.getInt("WorkComp", 30);
     MinDefreeze = preferences.getInt("Defreeze", 10);
@@ -92,6 +90,13 @@ void Storage( void * parameter)
     TempSensorLocation_4 = preferences.getInt("SensorLoc4", 0);
     LockFlag = preferences.getBool("LockFlag", false);
     TenthsFlag = preferences.getBool("TenthsFlag", true);
+    TargetTemp = preferences.getDouble("TargetTemp", 10.0f);
+    CalibTemp_0 = preferences.getDouble("CalTemp0", 0.0f);
+    CalibTemp_1 = preferences.getDouble("CalTemp1", 0.0f);
+    CalibTemp_2 = preferences.getDouble("CalTemp2", 0.0f);
+    CalibTemp_3 = preferences.getDouble("CalTemp3", 0.0f);
+    CalibTemp_4 = preferences.getDouble("CalTemp4", 0.0f);
+    numberOfDevices = preferences.getInt("numDevices", 1);
 
     preferences.end();
     vTaskDelay(100/portTICK_PERIOD_MS);
@@ -117,14 +122,15 @@ void Storage( void * parameter)
     uint8_t W_brightness_Old = W_brightness;
     bool LockFlag_Old = LockFlag;
     bool TenthsFlag_old = TenthsFlag;
-    
+    int numberOfDevices_old = numberOfDevices;
+   
     while(1){
         
         //any change in var 
         if((LockFlag_Old != LockFlag)||(contrast_Old != contrast)||(R_brightness_Old != R_brightness)||(G_brightness_Old != G_brightness)||
         (B_brightness_Old != B_brightness)||(W_brightness_Old != W_brightness)||(MinWorkComp_Old != MinWorkComp)||(MinDefreeze_Old != MinDefreeze)||
         (abs(TargetTemp_Old-TargetTemp)>0.1)||(abs(CalibTemp_0_Old - CalibTemp_0)>0.01)||(TenthsFlag_old != TenthsFlag)||(DisplayUIFlag_old != DisplayUIFlag)||
-        (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||
+        (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||(numberOfDevices_old != numberOfDevices)||
         (abs(CalibTemp_4_Old - CalibTemp_4)>0.01)||(TempSensorLocation_0_Old != TempSensorLocation_0)||(TempSensorLocation_1_Old != TempSensorLocation_1)||
         (TempSensorLocation_2_Old != TempSensorLocation_2)||(TempSensorLocation_3_Old != TempSensorLocation_3)||(TempSensorLocation_4_Old != TempSensorLocation_4)){
 
@@ -153,11 +159,11 @@ void Storage( void * parameter)
             preferences.begin("data-space", false);
             
             preferences.putDouble("TargetTemp", TargetTemp);
-            preferences.putDouble("CalTemp_0", CalibTemp_0);
-            preferences.putDouble("CalTemp_1", CalibTemp_1);
-            preferences.putDouble("CalTemp_2", CalibTemp_2);
-            preferences.putDouble("CalTemp_3", CalibTemp_3);
-            preferences.putDouble("CalTemp_4", CalibTemp_4);
+            preferences.putDouble("CalTemp0", CalibTemp_0);
+            preferences.putDouble("CalTemp1", CalibTemp_1);
+            preferences.putDouble("CalTemp2", CalibTemp_2);
+            preferences.putDouble("CalTemp3", CalibTemp_3);
+            preferences.putDouble("CalTemp4", CalibTemp_4);
             preferences.putInt("contrast", contrast);
             preferences.putInt("WorkComp", MinWorkComp);
             preferences.putInt("Defreeze", MinDefreeze);
@@ -171,6 +177,7 @@ void Storage( void * parameter)
             preferences.putInt("SensorLoc2", TempSensorLocation_2);
             preferences.putInt("SensorLoc3", TempSensorLocation_3);
             preferences.putInt("SensorLoc4", TempSensorLocation_4);
+            preferences.putInt("numDevices", numberOfDevices);
             preferences.putBool("LockFlag", LockFlag);
             preferences.putBool("TenthsFlag", TenthsFlag);
             
@@ -271,10 +278,9 @@ void Sensors( void * parameter)
     /*    #1 Open door switch get data    #2 Temp sersor(s) ds18b20 get data    */
 
     sensors.begin();
-    sensors.setResolution(10);
+    sensors.setResolution(12);
     // Grab a count of devices on the wire
-    numberOfDevices = 4;                                // !!!!!!!!!!!!!!!!!!!!!!!TODO WEB Number for sensors!
-    if(Debug) Serial.println(numberOfDevices);
+    //numberOfDevices = 4;                                // !!!!!!!!!!!!!!!!!!!!!!!TODO Storage save!
     // Loop through each device, print out address
     for(int i=0;i<=numberOfDevices; i++){
         // Search the wire for address
@@ -294,24 +300,39 @@ void Sensors( void * parameter)
     while(1){
         sensors.requestTemperatures(); // Send the command to get temperatures
         // Loop through each device, print out temperature data
+        delay(1000);
+        
         for(int i=0;i<=numberOfDevices; i++){
             // Search the wire for address
-            double temp = double(sensors.getTempCByIndex(i));
-                if((temp>-50.0f)&&(temp<80.0f)){
-                    tempC = temp;
+            float dataRes = double(sensors.getTempCByIndex(i));
+            if(dataRes==DEVICE_DISCONNECTED_C||dataRes==DEVICE_DISCONNECTED_RAW){
+            SensorReadyFlag = false;
+            Warning = true;
+            if(Debug)
+             Serial.print("WARNING! - ");
+            if(Debug)
+             Serial.println(dataRes);
+            }else{
+                if((dataRes>-50.0f)&&(dataRes<80.0f)){
+                    tempC = dataRes;    //TODO Fix temp logic!
 
-                    if(i==0) TempSensor_0 = temp;
-                    if(i==1) TempSensor_1 = temp;
-                    if(i==2) TempSensor_2 = temp;
-                    if(i==3) TempSensor_3 = temp;
-                    if(i==4) TempSensor_4 = temp;
+                    if(i==0) TempSensor_0 = dataRes;
+                    if(i==1) TempSensor_1 = dataRes;
+                    if(i==2) TempSensor_2 = dataRes;
+                    if(i==3) TempSensor_3 = dataRes;
+                    if(i==4) TempSensor_4 = dataRes;
+                    SensorReadyFlag = true;
                 }
-                else{ if(Debug) Serial.println("Temp Sensor Error #1"); Warning = true;}             
-
+                else{ if(Debug) Serial.println("Temp out of range!"); Warning = true;}             
             }
-        vTaskDelay(10000/portTICK_PERIOD_MS);
+        }
+         
         
+
+
+        vTaskDelay(30000/portTICK_PERIOD_MS);
     }
+
     vTaskDelete( NULL );
 }
 
@@ -337,7 +358,7 @@ void ClockRTC( void * parameter)
     /*    #1 Additional tasks    */
     xSemaphoreTake(i2c_line, portMAX_DELAY);
     Wire.setPins(21,22);
-    Wire.begin(21,22,400000);
+    //Wire.begin(21,22,400000);
     if (! rtc.begin()) {
     Warning = true;
     Serial.println("Error RTC!");
