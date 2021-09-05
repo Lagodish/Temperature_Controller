@@ -23,6 +23,7 @@ extern bool TenthsFlag;
 extern bool DefreezeFlag;
 extern uint8_t HourNow;
 extern uint8_t MinNow;
+extern bool Warning;
 extern bool SensorReadyFlag;
 // Extern.
 extern SemaphoreHandle_t i2c_line;
@@ -103,7 +104,8 @@ void Frame_2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t
   display->drawString(80 + x, 15 + y, String(DecimalPart));}
   
   display->drawIco16x16(107 + x, 14 + y, LockFlag ? lock_closed_icon16x16 : lock_open_icon16x16); //Power powerbutton_icon16x16   || lock_closed_icon16x16 or lock_open_icon16x16 or door_icon16x16 if door is open || warning_icon16x16
-  display->drawIco16x16(107 + x, 31 + y, LightFlag ? bulb_off_icon16x16 : bulb_icon16x16);    //Light    || or bulb_icon16x16
+  if(Warning) display->drawIco16x16(107 + x, 31 + y, warning_icon16x16);    //Light    || or bulb_icon16x16
+  else display->drawIco16x16(107 + x, 31 + y, LightFlag ? bulb_off_icon16x16 : bulb_icon16x16);
   display->drawIco16x16(107 + x, 48 + y, DefreezeFlag ? humidity_icon16x16 : humidity2_icon16x16);    //Water    || or humidity2_icon16x16
 }
 
@@ -160,21 +162,20 @@ void GUI( void * parameter)
     //uint8_t oldData = 0;
     //if(oldData!=contrast){oldData=contrast; display.setBrightness(contrast);}
     display.setBrightness(contrast);
-    xSemaphoreGive(i2c_line);
 
-    while (SensorReadyFlag)
-    {
-      vTaskDelay(500/portTICK_PERIOD_MS);
-    }
+    delay(100);
+    xSemaphoreGive(i2c_line);
     
     int remainingTimeBudget = 0;
     
     while(1){
         xSemaphoreTake(i2c_line, portMAX_DELAY);
         remainingTimeBudget = ui.update();
-       // Serial.print("Delay: ");
-       // Serial.println(remainingTimeBudget);
-        
+
+        //if(SensorReadyFlag) ui.switchToFrame(3);
+        //else ui.switchToFrame(DisplayUIFlag);
+    
+   
         if (remainingTimeBudget > 0){xSemaphoreGive(i2c_line); vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS); }
 
     }

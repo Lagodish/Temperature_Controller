@@ -170,7 +170,7 @@ void numberCall( Control* sender, int type ) {
   if(id==NumberIdC2){CalibTemp_2 = data;}
   if(id==NumberIdC3){CalibTemp_3 = data;}
   if(id==NumberIdC4){CalibTemp_4 = data;}
-  if(id==NumberIdN){numberOfDevices = int(data)-1;}
+  if(id==NumberIdN){numberOfDevices = int(data);}
 
 }
 
@@ -236,7 +236,7 @@ void WebServer( void * parameter)
   NumberIdTW = ESPUI.addControl(ControlType::Number, "Compressor Work Time<br>Время работы компрессора (Min)", String(MinWorkComp), ControlColor::Alizarin, tab2, &numberCall);
   NumberIdTD = ESPUI.addControl(ControlType::Number, "Defreeze Duration<br>Время оттайки (Min)", String(MinDefreeze), ControlColor::Peterriver, tab2, &numberCall);
   SwitchId1 = ESPUI.addControl(ControlType::Switcher, "Display tenths<br>Отображать десятые", TenthsFlag ? "1" : "0", ControlColor::None, tab2, &switcherCallback);
-  NumberIdN = ESPUI.addControl(ControlType::Number, "Number of sensor(s)<br>Кол-во термодатчикоа (шт)", String(numberOfDevices+1), ControlColor::Emerald, tab2, &numberCall);
+  NumberIdN = ESPUI.addControl(ControlType::Number, "Number of sensor(s)<br>Кол-во термодатчикоа (шт)", String(numberOfDevices), ControlColor::Emerald, tab2, &numberCall);
   NumberIdC0 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #0<br>Калибровка термодатчика #0 (°C):", String(CalibTemp_0), ControlColor::Sunflower, tab2, &numberCall);
   select0 = ESPUI.addControl( ControlType::Select, "Sensor #0 located<br>Расположение термодатчика #0", String(TempSensorLocation_0), ControlColor::None, tab2, &selectCallback);
   NumberIdC1 = ESPUI.addControl(ControlType::Number, "Calibration Sensor #1<br>Калибровка термодатчика #1 (°C)", String(CalibTemp_1), ControlColor::Sunflower, tab2, &numberCall);

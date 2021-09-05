@@ -38,6 +38,7 @@ uint8_t B_brightness = 0;
 uint8_t W_brightness = 0;
 uint8_t HourNow = 0;
 uint8_t MinNow = 0;
+int warn_count = 0;
 
 bool FanFlag = false;
 bool DefreezeFlag = false;
@@ -72,8 +73,6 @@ void Storage( void * parameter)
     /*    #1 Get data from flash storage    */
 
     preferences.begin("data-space", false);
-    //preferences.clear();
-    delay(500);
     
     contrast = preferences.getInt("contrast", 110);
     MinWorkComp = preferences.getInt("WorkComp", 30);
@@ -99,7 +98,6 @@ void Storage( void * parameter)
     numberOfDevices = preferences.getInt("numDevices", 1);
 
     preferences.end();
-    vTaskDelay(100/portTICK_PERIOD_MS);
 
     double TargetTemp_Old = TargetTemp;
     double CalibTemp_0_Old = CalibTemp_0;
@@ -123,6 +121,7 @@ void Storage( void * parameter)
     bool LockFlag_Old = LockFlag;
     bool TenthsFlag_old = TenthsFlag;
     int numberOfDevices_old = numberOfDevices;
+    
    
     while(1){
         
@@ -155,6 +154,7 @@ void Storage( void * parameter)
             TempSensorLocation_2_Old = TempSensorLocation_2;
             TempSensorLocation_3_Old = TempSensorLocation_3;
             TempSensorLocation_4_Old = TempSensorLocation_4;
+            numberOfDevices_old = numberOfDevices;
             
             preferences.begin("data-space", false);
             
@@ -282,7 +282,7 @@ void Sensors( void * parameter)
     // Grab a count of devices on the wire
     //numberOfDevices = 4;                                // !!!!!!!!!!!!!!!!!!!!!!!TODO Storage save!
     // Loop through each device, print out address
-    for(int i=0;i<=numberOfDevices; i++){
+    for(int i=0;i<numberOfDevices; i++){
         // Search the wire for address
         if(sensors.getAddress(tempDeviceAddress, i)){
         if(Debug) Serial.print("Found device ");
@@ -296,41 +296,37 @@ void Sensors( void * parameter)
         if(Debug) Serial.print(" but could not detect address. Check power and cabling");
         }
     }
-
+    
     while(1){
         sensors.requestTemperatures(); // Send the command to get temperatures
         // Loop through each device, print out temperature data
-        delay(1000);
-        
-        for(int i=0;i<=numberOfDevices; i++){
+        vTaskDelay(750/portTICK_PERIOD_MS);
+        for(int i=0;i<numberOfDevices; i++){
             // Search the wire for address
             float dataRes = double(sensors.getTempCByIndex(i));
-            if(dataRes==DEVICE_DISCONNECTED_C||dataRes==DEVICE_DISCONNECTED_RAW){
+            if(dataRes==DEVICE_DISCONNECTED_C||dataRes==DEVICE_DISCONNECTED_RAW||(dataRes==85)){
             SensorReadyFlag = false;
-            Warning = true;
-            if(Debug)
-             Serial.print("WARNING! - ");
-            if(Debug)
-             Serial.println(dataRes);
+            warn_count++;
+            if(warn_count>5){Warning = true;}
+            if(!Debug){
+                Serial.print(i);
+                Serial.print("# WARNING! - ");
+                Serial.println(dataRes);
+            }
             }else{
-                if((dataRes>-50.0f)&&(dataRes<80.0f)){
                     tempC = dataRes;    //TODO Fix temp logic!
-
+                        
                     if(i==0) TempSensor_0 = dataRes;
                     if(i==1) TempSensor_1 = dataRes;
                     if(i==2) TempSensor_2 = dataRes;
                     if(i==3) TempSensor_3 = dataRes;
                     if(i==4) TempSensor_4 = dataRes;
                     SensorReadyFlag = true;
-                }
-                else{ if(Debug) Serial.println("Temp out of range!"); Warning = true;}             
+               // }
+                //else{ if(Debug) Serial.println("Temp out of range!"); Warning = true;}             
             }
         }
-         
-        
-
-
-        vTaskDelay(30000/portTICK_PERIOD_MS);
+        vTaskDelay(10000/portTICK_PERIOD_MS);
     }
 
     vTaskDelete( NULL );
@@ -343,8 +339,11 @@ void Additional( void * parameter)
     /*    #1 Additional tasks    */
 
     while(1){
-        
-        vTaskDelay(5000/portTICK_PERIOD_MS);
+        if(Warning){
+            Serial.println("######### WARNING #########");
+            warn_count = 0;
+        }
+        vTaskDelay(60000/portTICK_PERIOD_MS);
 
     }
     
