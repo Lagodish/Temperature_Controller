@@ -57,7 +57,7 @@ void msOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
 void Frame_1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
 
   int IntegerPart = (int)(tempC);
-  int DecimalPart = 10 * (tempC - IntegerPart);
+  int DecimalPart = 10 * abs(tempC - IntegerPart);
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(DSEG7_Classic_Regular_50);
@@ -88,7 +88,7 @@ void Frame_1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t
 void Frame_2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
 
   int IntegerPart = (int)(tempC);
-  int DecimalPart = 10 * (tempC - IntegerPart);
+  int DecimalPart = 10 * abs(tempC - IntegerPart);
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(DSEG7_Classic_Regular_50);
@@ -112,7 +112,7 @@ void Frame_2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t
 void Frame_3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
 
   int IntegerPart = (int)(tempC);
-  int DecimalPart = 10 * (tempC - IntegerPart);
+  int DecimalPart = 10 * abs(tempC - IntegerPart);
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(DSEG7_Classic_Regular_50);
