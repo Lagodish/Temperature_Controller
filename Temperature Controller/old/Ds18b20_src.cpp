@@ -36,6 +36,8 @@ void setup(){
   // Start up the library
   sensors.begin();
   
+  
+  // !!!  https://github.com/PaulStoffregen/OneWire/issues/57#issuecomment-450151098
   // Grab a count of devices on the wire
   numberOfDevices = sensors.getDeviceCount()+1;
   

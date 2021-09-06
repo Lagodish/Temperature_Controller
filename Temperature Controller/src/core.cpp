@@ -32,10 +32,20 @@ int TempSensorLocation_2 = 0;
 int TempSensorLocation_3 = 0;
 int TempSensorLocation_4 = 0;
 
+int SPdiff = 0;
+int SPmin = 0;
+int SPmax = 0;
+int OnDelay = 0;
+int BetweenDelay = 0;
+int TempIndValue = 0;
+int TempIndValueDefr = 0;
+int DefrTrig = 0;
+
 int contrast = 0;
 int numberOfDevices = 0;
 int DefrostWorkTime = 0;
 int MinDefreeze = 0;
+int DefreezeTempTrig = 0;
 int DisplayUIFlag = 0;
 uint8_t R_brightness = 0;
 uint8_t G_brightness = 0;
@@ -52,6 +62,8 @@ bool CompressorFlag = false;
 bool LightFlag = false;
 bool LockFlag = false;
 bool TenthsFlag = true;
+bool FanOnWork = true;
+bool FanOnDefr = false;
 
 bool Warning = false;
 bool Debug = false;
@@ -86,11 +98,11 @@ void Storage( void * parameter)
     B_brightness = preferences.getInt("B_bright", 0);
     W_brightness = preferences.getInt("W_bright", 255);
     DisplayUIFlag = preferences.getInt("DisplayUI", 1);
-    TempSensorLocation_0 = preferences.getInt("SensorLoc0", 0);
+    TempSensorLocation_0 = preferences.getInt("SensorLoc0", 1);
     TempSensorLocation_1 = preferences.getInt("SensorLoc1", 0);
-    TempSensorLocation_2 = preferences.getInt("SensorLoc2", 0);
-    TempSensorLocation_3 = preferences.getInt("SensorLoc3", 0);
-    TempSensorLocation_4 = preferences.getInt("SensorLoc4", 0);
+    TempSensorLocation_2 = preferences.getInt("SensorLoc2", 127);
+    TempSensorLocation_3 = preferences.getInt("SensorLoc3", 127);
+    TempSensorLocation_4 = preferences.getInt("SensorLoc4", 127);
     LockFlag = preferences.getBool("LockFlag", false);
     TenthsFlag = preferences.getBool("TenthsFlag", true);
     TargetTemp = preferences.getDouble("TargetTemp", 10.0f);
@@ -99,9 +111,15 @@ void Storage( void * parameter)
     CalibTemp_2 = preferences.getDouble("CalTemp2", 0.0f);
     CalibTemp_3 = preferences.getDouble("CalTemp3", 0.0f);
     CalibTemp_4 = preferences.getDouble("CalTemp4", 0.0f);
-    numberOfDevices = preferences.getInt("numDevices", 1);
+    //numberOfDevices = preferences.getInt("numDevices", 1);
 
     preferences.end();
+
+    if(TempSensorLocation_0 != 127) numberOfDevices++;
+    if(TempSensorLocation_1 != 127) numberOfDevices++;
+    if(TempSensorLocation_2 != 127) numberOfDevices++;
+    if(TempSensorLocation_3 != 127) numberOfDevices++;
+    if(TempSensorLocation_4 != 127) numberOfDevices++;
 
     double TargetTemp_Old = TargetTemp;
     double CalibTemp_0_Old = CalibTemp_0;
@@ -124,7 +142,7 @@ void Storage( void * parameter)
     uint8_t W_brightness_Old = W_brightness;
     bool LockFlag_Old = LockFlag;
     bool TenthsFlag_old = TenthsFlag;
-    int numberOfDevices_old = numberOfDevices;
+    //int numberOfDevices_old = numberOfDevices;
     
    
     while(1){
@@ -133,7 +151,7 @@ void Storage( void * parameter)
         if((LockFlag_Old != LockFlag)||(contrast_Old != contrast)||(R_brightness_Old != R_brightness)||(G_brightness_Old != G_brightness)||
         (B_brightness_Old != B_brightness)||(W_brightness_Old != W_brightness)||(DefrostWorkTime_Old != DefrostWorkTime)||(MinDefreeze_Old != MinDefreeze)||
         (abs(TargetTemp_Old-TargetTemp)>0.1)||(abs(CalibTemp_0_Old - CalibTemp_0)>0.01)||(TenthsFlag_old != TenthsFlag)||(DisplayUIFlag_old != DisplayUIFlag)||
-        (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||(numberOfDevices_old != numberOfDevices)||
+        (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||
         (abs(CalibTemp_4_Old - CalibTemp_4)>0.01)||(TempSensorLocation_0_Old != TempSensorLocation_0)||(TempSensorLocation_1_Old != TempSensorLocation_1)||
         (TempSensorLocation_2_Old != TempSensorLocation_2)||(TempSensorLocation_3_Old != TempSensorLocation_3)||(TempSensorLocation_4_Old != TempSensorLocation_4)){
 
@@ -158,7 +176,7 @@ void Storage( void * parameter)
             TempSensorLocation_2_Old = TempSensorLocation_2;
             TempSensorLocation_3_Old = TempSensorLocation_3;
             TempSensorLocation_4_Old = TempSensorLocation_4;
-            numberOfDevices_old = numberOfDevices;
+            //numberOfDevices_old = numberOfDevices;
             
             preferences.begin("data-space", false);
             
@@ -181,7 +199,7 @@ void Storage( void * parameter)
             preferences.putInt("SensorLoc2", TempSensorLocation_2);
             preferences.putInt("SensorLoc3", TempSensorLocation_3);
             preferences.putInt("SensorLoc4", TempSensorLocation_4);
-            preferences.putInt("numDevices", numberOfDevices);
+            //preferences.putInt("numDevices", numberOfDevices);
             preferences.putBool("LockFlag", LockFlag);
             preferences.putBool("TenthsFlag", TenthsFlag);
             
@@ -280,6 +298,8 @@ void Sensors( void * parameter)
     /*    #1 Open door switch get data    #2 Temp sersor(s) ds18b20 get data    */
 
     sensors.begin();
+    vTaskDelay(800/portTICK_PERIOD_MS);
+    //Serial.println(sensors.getDS18Count());
     sensors.setResolution(12);
     
     while(1){
@@ -317,12 +337,12 @@ void Check( void * parameter)
     if(Debug) Serial.println("Check task start!");
 
     /*    #1 Additional tasks    */
-
+    vTaskDelay(3000);
     while(1){
         if(Warning)
             Serial.println("######### WARNING #########");
         
-        if(warnCount>3)
+        if(warnCount>4)
             Warning = true;
         else
         warnCount = 0;
@@ -333,7 +353,6 @@ void Check( void * parameter)
     
     vTaskDelete( NULL );
 }
-
 
 void Additional( void * parameter)
 {
