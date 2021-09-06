@@ -233,7 +233,7 @@ void WebServer( void * parameter)
   Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
 
   ESPUI.jsonUpdateDocumentSize = 2000;
-  ESPUI.jsonInitialDocumentSize = 9000;
+  ESPUI.jsonInitialDocumentSize = 10000;
 
   //statusLabelId = ESPUI.addControl(ControlType::Label, "Status:", "Stop", ControlColor::Turquoise);
   
