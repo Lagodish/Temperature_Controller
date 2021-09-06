@@ -34,7 +34,7 @@ int TempSensorLocation_4 = 0;
 
 int contrast = 0;
 int numberOfDevices = 0;
-int MinWorkComp = 0;
+int DefrostWorkTime = 0;
 int MinDefreeze = 0;
 int DisplayUIFlag = 0;
 uint8_t R_brightness = 0;
@@ -56,6 +56,7 @@ bool TenthsFlag = true;
 bool Warning = false;
 bool Debug = false;
 bool ChangesToSaveFlag = false; //TODO Logic use!
+bool ManualMode = false;
 
 // Extern.
 extern SemaphoreHandle_t i2c_line;
@@ -78,7 +79,7 @@ void Storage( void * parameter)
     preferences.begin("data-space", false);
     
     contrast = preferences.getInt("contrast", 110);
-    MinWorkComp = preferences.getInt("WorkComp", 30);
+    DefrostWorkTime = preferences.getInt("WorkTDef", 30);
     MinDefreeze = preferences.getInt("Defreeze", 10);
     R_brightness = preferences.getInt("R_bright", 0);
     G_brightness = preferences.getInt("G_bright", 0);
@@ -109,7 +110,7 @@ void Storage( void * parameter)
     double CalibTemp_3_Old = CalibTemp_3;
     double CalibTemp_4_Old = CalibTemp_4;
     int contrast_Old = contrast;
-    int MinWorkComp_Old = MinWorkComp;
+    int DefrostWorkTime_Old = DefrostWorkTime;
     int MinDefreeze_Old = MinDefreeze;
     int DisplayUIFlag_old = DisplayUIFlag;
     int TempSensorLocation_0_Old = TempSensorLocation_0;
@@ -130,7 +131,7 @@ void Storage( void * parameter)
         
         //any change in var 
         if((LockFlag_Old != LockFlag)||(contrast_Old != contrast)||(R_brightness_Old != R_brightness)||(G_brightness_Old != G_brightness)||
-        (B_brightness_Old != B_brightness)||(W_brightness_Old != W_brightness)||(MinWorkComp_Old != MinWorkComp)||(MinDefreeze_Old != MinDefreeze)||
+        (B_brightness_Old != B_brightness)||(W_brightness_Old != W_brightness)||(DefrostWorkTime_Old != DefrostWorkTime)||(MinDefreeze_Old != MinDefreeze)||
         (abs(TargetTemp_Old-TargetTemp)>0.1)||(abs(CalibTemp_0_Old - CalibTemp_0)>0.01)||(TenthsFlag_old != TenthsFlag)||(DisplayUIFlag_old != DisplayUIFlag)||
         (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||(numberOfDevices_old != numberOfDevices)||
         (abs(CalibTemp_4_Old - CalibTemp_4)>0.01)||(TempSensorLocation_0_Old != TempSensorLocation_0)||(TempSensorLocation_1_Old != TempSensorLocation_1)||
@@ -143,7 +144,7 @@ void Storage( void * parameter)
             CalibTemp_3_Old = CalibTemp_3;
             CalibTemp_4_Old = CalibTemp_4;
             contrast_Old = contrast;
-            MinWorkComp_Old = MinWorkComp;
+            DefrostWorkTime_Old = DefrostWorkTime;
             MinDefreeze_Old = MinDefreeze;
             R_brightness_Old = R_brightness;
             G_brightness_Old = G_brightness;
@@ -168,7 +169,7 @@ void Storage( void * parameter)
             preferences.putDouble("CalTemp3", CalibTemp_3);
             preferences.putDouble("CalTemp4", CalibTemp_4);
             preferences.putInt("contrast", contrast);
-            preferences.putInt("WorkComp", MinWorkComp);
+            preferences.putInt("WorkTDef", DefrostWorkTime);
             preferences.putInt("Defreeze", MinDefreeze);
             preferences.putInt("R_bright", R_brightness);
             preferences.putInt("G_bright", G_brightness);

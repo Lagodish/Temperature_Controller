@@ -25,7 +25,7 @@ void setup() {
   xTaskCreate(Additional, "Additional", 5000, NULL, 1, NULL);
   xTaskCreate(Check, "Check", 5000, NULL, 1, NULL);
   xTaskCreatePinnedToCore(GUI, "GUI", 10000, NULL, 1, NULL, 1);
-  xTaskCreate(WebServer, "WebServer", 7000, NULL, 1, NULL);
+  xTaskCreate(WebServer, "WebServer", 10000, NULL, 1, NULL);
 
   //xTaskCreatePinnedToCore(WebServer, "WebServer", 10000, NULL, 2, NULL,  1); 
 
