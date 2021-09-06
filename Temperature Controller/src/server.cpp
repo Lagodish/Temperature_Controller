@@ -232,8 +232,11 @@ void WebServer( void * parameter)
   Serial.print("IP address: ");
   Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
 
+  ESPUI.jsonUpdateDocumentSize = 2000;
+  ESPUI.jsonInitialDocumentSize = 9000;
+
   //statusLabelId = ESPUI.addControl(ControlType::Label, "Status:", "Stop", ControlColor::Turquoise);
-  //millisLabelId = ESPUI.addControl(ControlType::Label, "UpTime:", "0.0 h", ControlColor::Carrot);
+  
 
   uint16_t tab1 = ESPUI.addControl(ControlType::Tab, "Light&Display", "Light&Display");
   uint16_t tab2 = ESPUI.addControl(ControlType::Tab, "Main", "Main");
@@ -276,6 +279,7 @@ void WebServer( void * parameter)
     ESPUI.addControl( ControlType::Option, "Периодический – температура испарителя установится ниже температуры D1 и по истечению D0", "1", ControlColor::Alizarin, select10);
 
 //------------------ TAB 3
+  millisLabelId = ESPUI.addControl(ControlType::Label, "UpTime:", "0.0 h", ControlColor::Carrot,tab3);
   ButtonId0 = ESPUI.addControl(ControlType::Button, "Reboot Controller<br>Перезагрузить", "Reboot now<br>Сейчас", ControlColor::Alizarin, tab3, &buttonCallback);
   SwitchIdM = ESPUI.addControl(ControlType::Switcher, "Manual Mode *!*<br>Ручное управление *!*", ManualMode ? "1" : "0", ControlColor::None, tab3, &switcherCallback);  
   SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Fan<br>Вентилятор", "0", ControlColor::None, tab3, &switcherCallback);
@@ -347,7 +351,6 @@ void WebServer( void * parameter)
    * password, for example begin("ESPUI Control", "username", "password")
    */
 
-
   ESPUI.begin("Temperature Controller","admin","admin");
   //ESPUI.clearGraph(graphId);
 
@@ -359,7 +362,7 @@ void WebServer( void * parameter)
   double TempOld_2 = 0;
   double TempOld_3 = 0;
   double TempOld_4 = 0;
-  double Millis_Old = 0;
+  int Millis_Old = 0;
 
     while(1){
 
@@ -368,8 +371,8 @@ void WebServer( void * parameter)
       //if(CompressorFlag||FanFlag||RelayFlag)  Serial.println("Status: Operate");
       //else  ESPUI.updateControlValue(statusLabelId, "Stop");
               
-      //double MillisNow = round(millis())/(60 * 60 * 1000); //TODO fix! Not working
-      //if(Millis_Old!=MillisNow){Millis_Old=MillisNow; ESPUI.updateControlValue(millisLabelId, String(MillisNow)+" h");}
+      int MillisNow = millis()/(60 * 600); //TODO fix! Not working
+      if(Millis_Old!=MillisNow){Millis_Old=MillisNow; ESPUI.updateControlValue(millisLabelId, String(double(millis())/(60 * 60 * 1000))+" h");}
           
       //ESPUI.addGraphPoint(graphId, int(round(tempC*10)));
 
