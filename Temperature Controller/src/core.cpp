@@ -69,6 +69,7 @@ bool Warning = false;
 bool Debug = false;
 bool ChangesToSaveFlag = false; //TODO Logic use!
 bool ManualMode = false;
+bool DataReady = false;
 
 // Extern.
 extern SemaphoreHandle_t i2c_line;
@@ -90,6 +91,11 @@ void Storage( void * parameter)
 
     preferences.begin("data-space", false);
     
+    CalibTemp_0 = preferences.getDouble("CalTemp0", 0.0f);
+    CalibTemp_1 = preferences.getDouble("CalTemp1", 0.0f);
+    CalibTemp_2 = preferences.getDouble("CalTemp2", 0.0f);
+    CalibTemp_3 = preferences.getDouble("CalTemp3", 0.0f);
+    CalibTemp_4 = preferences.getDouble("CalTemp4", 0.0f);
     contrast = preferences.getInt("contrast", 110);
     DefrostWorkTime = preferences.getInt("WorkTDef", 30);
     MinDefreeze = preferences.getInt("Defreeze", 10);
@@ -106,12 +112,18 @@ void Storage( void * parameter)
     LockFlag = preferences.getBool("LockFlag", false);
     TenthsFlag = preferences.getBool("TenthsFlag", true);
     TargetTemp = preferences.getDouble("TargetTemp", 10.0f);
-    CalibTemp_0 = preferences.getDouble("CalTemp0", 0.0f);
-    CalibTemp_1 = preferences.getDouble("CalTemp1", 0.0f);
-    CalibTemp_2 = preferences.getDouble("CalTemp2", 0.0f);
-    CalibTemp_3 = preferences.getDouble("CalTemp3", 0.0f);
-    CalibTemp_4 = preferences.getDouble("CalTemp4", 0.0f);
-    //numberOfDevices = preferences.getInt("numDevices", 1);
+
+    FanOnWork = preferences.getBool("FanOnWork", true);
+    FanOnDefr = preferences.getBool("FanOnDefr", false);
+    SPdiff = preferences.getInt("SPdiff", 2);
+    SPmin = preferences.getInt("SPmin", 5);
+    SPmax = preferences.getInt("SPmax", 18);
+    OnDelay = preferences.getInt("OnDelay", 0);
+    BetweenDelay = preferences.getInt("BtwDelay", 10);
+    TempIndValue = preferences.getInt("TempValue", 0);
+    TempIndValueDefr = preferences.getInt("ValueDefr", 0);
+    DefrTrig = preferences.getInt("DefrTrig", 0);
+    DefreezeTempTrig = preferences.getInt("DefrTemp", -5);
 
     preferences.end();
 
@@ -142,8 +154,19 @@ void Storage( void * parameter)
     uint8_t W_brightness_Old = W_brightness;
     bool LockFlag_Old = LockFlag;
     bool TenthsFlag_old = TenthsFlag;
-    //int numberOfDevices_old = numberOfDevices;
-    
+    bool FanOnWork_old=FanOnWork;
+    bool FanOnDefr_old=FanOnDefr;
+    int SPdiff_old=SPdiff;
+    int SPmin_old=SPmin;
+    int SPmax_old=SPmax;
+    int OnDelay_old=OnDelay;
+    int BetweenDelay_old=BetweenDelay;
+    int TempIndValue_old=TempIndValue;
+    int TempIndValueDefr_old=TempIndValueDefr;
+    int DefrTrig_old=DefrTrig;
+    int DefreezeTempTrig_Old = DefreezeTempTrig;
+
+    DataReady=true;
    
     while(1){
         
@@ -151,8 +174,10 @@ void Storage( void * parameter)
         if((LockFlag_Old != LockFlag)||(contrast_Old != contrast)||(R_brightness_Old != R_brightness)||(G_brightness_Old != G_brightness)||
         (B_brightness_Old != B_brightness)||(W_brightness_Old != W_brightness)||(DefrostWorkTime_Old != DefrostWorkTime)||(MinDefreeze_Old != MinDefreeze)||
         (abs(TargetTemp_Old-TargetTemp)>0.1)||(abs(CalibTemp_0_Old - CalibTemp_0)>0.01)||(TenthsFlag_old != TenthsFlag)||(DisplayUIFlag_old != DisplayUIFlag)||
-        (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||
+        (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||(DefreezeTempTrig_Old != DefreezeTempTrig)||
         (abs(CalibTemp_4_Old - CalibTemp_4)>0.01)||(TempSensorLocation_0_Old != TempSensorLocation_0)||(TempSensorLocation_1_Old != TempSensorLocation_1)||
+        (LockFlag_Old != LockFlag)||(TenthsFlag_old != TenthsFlag)||(FanOnWork_old!=FanOnWork)||(FanOnDefr_old!=FanOnDefr)||(SPdiff_old!=SPdiff)||(SPmin_old!=SPmin)||
+        (SPmax_old!=SPmax)||(OnDelay_old!=OnDelay)||(BetweenDelay_old!=BetweenDelay)||(TempIndValue_old!=TempIndValue)||(TempIndValueDefr_old!=TempIndValueDefr)||(DefrTrig_old!=DefrTrig)||
         (TempSensorLocation_2_Old != TempSensorLocation_2)||(TempSensorLocation_3_Old != TempSensorLocation_3)||(TempSensorLocation_4_Old != TempSensorLocation_4)){
 
             TargetTemp_Old = TargetTemp;
@@ -176,8 +201,20 @@ void Storage( void * parameter)
             TempSensorLocation_2_Old = TempSensorLocation_2;
             TempSensorLocation_3_Old = TempSensorLocation_3;
             TempSensorLocation_4_Old = TempSensorLocation_4;
-            //numberOfDevices_old = numberOfDevices;
-            
+            LockFlag_Old = LockFlag;
+            TenthsFlag_old = TenthsFlag;
+            FanOnWork_old=FanOnWork;
+            FanOnDefr_old=FanOnDefr;
+            SPdiff_old=SPdiff;
+            SPmin_old=SPmin;
+            SPmax_old=SPmax;
+            OnDelay_old=OnDelay;
+            BetweenDelay_old=BetweenDelay;
+            TempIndValue_old=TempIndValue;
+            TempIndValueDefr_old=TempIndValueDefr;
+            DefrTrig_old=DefrTrig;
+            DefreezeTempTrig_Old = DefreezeTempTrig; 
+                
             preferences.begin("data-space", false);
             
             preferences.putDouble("TargetTemp", TargetTemp);
@@ -199,17 +236,26 @@ void Storage( void * parameter)
             preferences.putInt("SensorLoc2", TempSensorLocation_2);
             preferences.putInt("SensorLoc3", TempSensorLocation_3);
             preferences.putInt("SensorLoc4", TempSensorLocation_4);
-            //preferences.putInt("numDevices", numberOfDevices);
             preferences.putBool("LockFlag", LockFlag);
             preferences.putBool("TenthsFlag", TenthsFlag);
-            
+            preferences.putBool("FanOnWork", FanOnWork);
+            preferences.putBool("FanOnDefr", FanOnDefr);
+            preferences.putInt("SPdiff", SPdiff);
+            preferences.putInt("SPmin", SPmin);
+            preferences.putInt("SPmax", SPmax);
+            preferences.putInt("OnDelay", OnDelay);
+            preferences.putInt("BtwDelay", BetweenDelay);
+            preferences.putInt("TempValue", TempIndValue);
+            preferences.putInt("ValueDefr", TempIndValueDefr);
+            preferences.putInt("DefrTrig", DefrTrig);
+            preferences.putInt("DefrTemp", DefreezeTempTrig);
 
             preferences.end();
 
-            if(1) Serial.println("Data Updated!");
+            Serial.println("Data Updated!");
         }
 
-        vTaskDelay(5000/portTICK_PERIOD_MS);
+        vTaskDelay(3000/portTICK_PERIOD_MS);
 
     }
 
