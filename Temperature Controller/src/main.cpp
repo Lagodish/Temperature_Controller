@@ -23,8 +23,8 @@ void setup() {
   xTaskCreatePinnedToCore(Sensors, "Sensors", 5000, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(ClockRTC, "ClockRTC", 5000, NULL, 1, NULL, 1);
   xTaskCreate(Light, "Light", 5000, NULL, 1, NULL);
-  xTaskCreate(Compressor, "Compressor", 5000, NULL, 1, NULL);
-  xTaskCreate(Ventilator, "Ventilator", 5000, NULL, 1, NULL);
+  xTaskCreate(Operate, "Compressor", 5000, NULL, 1, NULL);
+  xTaskCreate(Defreeze, "Defreeze", 5000, NULL, 1, NULL);
   xTaskCreate(Additional, "Additional", 5000, NULL, 1, NULL);
   xTaskCreate(Check, "Check", 5000, NULL, 1, NULL);
   xTaskCreatePinnedToCore(GUI, "GUI", 5000, NULL, 1, NULL, 1);

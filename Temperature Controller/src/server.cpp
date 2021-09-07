@@ -14,6 +14,7 @@ DNSServer dnsServer;
 #endif
 
 // Extern var.
+extern double TargetTemp;
 extern double TempSensor_0;
 extern double TempSensor_1;
 extern double TempSensor_2;
@@ -87,6 +88,7 @@ uint16_t SliderIdG=0;
 uint16_t SliderIdB=0;
 uint16_t SliderIdW=0;
 uint16_t SliderIdBrt=0;
+uint16_t NumberIdST=0;
 uint16_t NumberIdTW=0;
 uint16_t NumberIdTD=0;
 uint16_t NumberIdC0=0;
@@ -214,6 +216,7 @@ void numberCall( Control* sender, int type ) {
   if(NumberIdMax==id){SPmax= (sender->value).toInt();}
   if(NumberIdDW==id){OnDelay= (sender->value).toInt();}
   if(NumberIdDB==id){BetweenDelay= (sender->value).toInt();}
+  if(NumberIdST==id){TargetTemp = (sender->value).toDouble();}
 
 }
 
@@ -292,7 +295,7 @@ void WebServer( void * parameter)
   NumberIdMin = ESPUI.addControl(ControlType::Number, "Min working point value<br>Мин значение рабочей точки (°C)", String(SPmin), ControlColor::Turquoise, tab2, &numberCall);
   NumberIdMax = ESPUI.addControl(ControlType::Number, "Max working point value<br>Макс значение рабочей точки (°C)", String(SPmax), ControlColor::Turquoise, tab2, &numberCall);
   NumberIdDW = ESPUI.addControl(ControlType::Number, "Compressor turn-on delay at power-up (min.)<br>Задержка включения компрессора при подаче питания (минуты)", String(OnDelay), ControlColor::Turquoise, tab2, &numberCall);
-  NumberIdDB = ESPUI.addControl(ControlType::Number, "Delay between 2 consecutive compressor activations (min.)<br>Задержка между 2 последовательными активациями компрессора (минуты)", String(BetweenDelay), ControlColor::Turquoise, tab2, &numberCall);
+  NumberIdDB = ESPUI.addControl(ControlType::Number, "Interval compressor work (min.)<br>Интервал цикла компрессора (минуты)", String(BetweenDelay), ControlColor::Turquoise, tab2, &numberCall);
 
   select6 = ESPUI.addControl( ControlType::Select, "Temperature indicator value<br>Значение индикатора температуры", String(TempIndValue), ControlColor::Emerald, tab2, &selectCallback);
     ESPUI.addControl( ControlType::Option, "Chamber temperature / Температура камеры", "0", ControlColor::Alizarin, select6);
@@ -301,12 +304,13 @@ void WebServer( void * parameter)
     ESPUI.addControl( ControlType::Option, "Температура с датчика", "0", ControlColor::Alizarin, select9);
     ESPUI.addControl( ControlType::Option, "Температура  'установленная'/'рабочая точкa'", "1", ControlColor::Alizarin, select9);
   select10 = ESPUI.addControl( ControlType::Select, "Defrost activation method<br>Способ активации процесса оттайки", String(DefrTrig), ControlColor::Emerald, tab2, &selectCallback);
-    ESPUI.addControl( ControlType::Option, "Периодический – активирован по истечению D0", "0", ControlColor::Alizarin, select10);
-    ESPUI.addControl( ControlType::Option, "Периодический – температура испарителя установится ниже температуры D1 и по истечению D0", "1", ControlColor::Alizarin, select10);
+    ESPUI.addControl( ControlType::Option, "Периодический – активирован по интервалу D0", "0", ControlColor::Alizarin, select10);
+    ESPUI.addControl( ControlType::Option, "Периодический – температура испарителя установится ниже температуры D1 и по интервалу D0", "1", ControlColor::Alizarin, select10);
 
 //------------------ TAB 3
   millisLabelId = ESPUI.addControl(ControlType::Label, "UpTime:", "0.0 h", ControlColor::Carrot,tab3);
   ButtonId0 = ESPUI.addControl(ControlType::Button, "Reboot Controller<br>Перезагрузить", "Reboot now<br>Сейчас", ControlColor::Alizarin, tab3, &buttonCallback);
+  NumberIdST = ESPUI.addControl(ControlType::Number, "Target temp (°C)<br>Установленная температура (°C)", String(TargetTemp), ControlColor::Turquoise, tab3, &numberCall);
   SwitchIdM = ESPUI.addControl(ControlType::Switcher, "Manual Mode *!*<br>Ручное управление *!*", ManualMode ? "1" : "0", ControlColor::None, tab3, &switcherCallback);  
   SwitchIdF = ESPUI.addControl(ControlType::Switcher, "Fan<br>Вентилятор", "0", ControlColor::None, tab3, &switcherCallback);
   SwitchIdR = ESPUI.addControl(ControlType::Switcher, "Relay<br>Доп. выход", "0", ControlColor::None, tab3, &switcherCallback);

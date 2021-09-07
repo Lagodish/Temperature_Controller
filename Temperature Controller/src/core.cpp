@@ -91,11 +91,11 @@ void Storage( void * parameter)
 
     preferences.begin("data-space", false);
     
-    CalibTemp_0 = preferences.getDouble("CalTemp0", 0.0f);
-    CalibTemp_1 = preferences.getDouble("CalTemp1", 0.0f);
-    CalibTemp_2 = preferences.getDouble("CalTemp2", 0.0f);
-    CalibTemp_3 = preferences.getDouble("CalTemp3", 0.0f);
-    CalibTemp_4 = preferences.getDouble("CalTemp4", 0.0f);
+    CalibTemp_0 = preferences.getDouble("CalTemp0", 0.0);
+    CalibTemp_1 = preferences.getDouble("CalTemp1", 0.0);
+    CalibTemp_2 = preferences.getDouble("CalTemp2", 0.0);
+    CalibTemp_3 = preferences.getDouble("CalTemp3", 0.0);
+    CalibTemp_4 = preferences.getDouble("CalTemp4", 0.0);
     contrast = preferences.getInt("contrast", 110);
     DefrostWorkTime = preferences.getInt("WorkTDef", 30);
     MinDefreeze = preferences.getInt("Defreeze", 10);
@@ -112,7 +112,6 @@ void Storage( void * parameter)
     LockFlag = preferences.getBool("LockFlag", false);
     TenthsFlag = preferences.getBool("TenthsFlag", true);
     TargetTemp = preferences.getDouble("TargetTemp", 10.0f);
-
     FanOnWork = preferences.getBool("FanOnWork", true);
     FanOnDefr = preferences.getBool("FanOnDefr", false);
     SPdiff = preferences.getInt("SPdiff", 2);
@@ -297,41 +296,64 @@ void Light( void * parameter)
     vTaskDelete( NULL );
 }
 
-void Compressor( void * parameter)
+void Operate( void * parameter)
 {
-    if(Debug) Serial.println("Compressor task start!");
+    if(Debug) Serial.println("Operate task start!");
     
     /*    #1 Compressor freq. on/off control    */
     pinMode (Comp, OUTPUT);
+    for(int i=0;i<OnDelay*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
+    while(Zone_1==0.0){vTaskDelay(500/portTICK_PERIOD_MS);}
+
     while(1){
-         
+    
+        if(DefreezeFlag){CompressorFlag=false;}
+        else{
+            if((TargetTemp+double(SPdiff)/2)<Zone_1) {CompressorFlag=true;}
+            if((TargetTemp-double(SPdiff)/2)>Zone_1) {CompressorFlag=false;}
+        }
+
         digitalWrite(Comp, CompressorFlag);
 
-        vTaskDelay(5000/portTICK_PERIOD_MS);
+        for(int i=0;i<BetweenDelay*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
 
     }
 
     vTaskDelete( NULL );
 }
 
-void Ventilator( void * parameter)
+void Defreeze( void * parameter)
 {
-    if(Debug) Serial.println("Ventilator task start!");
+    if(Debug) Serial.println("Defreeze task start!");
 
-    /*    #1 Ventilator(s) speed(?) or on/off control    */
+    /*    #1 Defreeze or on/off control    */
 
     pinMode (F1, OUTPUT);
     pinMode (Relay, OUTPUT);
+    while(Zone_1==0.0){vTaskDelay(500/portTICK_PERIOD_MS);}
+    
     while(1){
+    
+
+        if(DefreezeFlag){
+            digitalWrite(Comp, false);
+            if(FanOnDefr){digitalWrite(F1, true);}
+            else{digitalWrite(F1, false);}
+            digitalWrite(Relay, true);
+            for(int i=0;i<DefrostWorkTime*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
+            DefreezeFlag = false;
+        }
+        else{
+            if(FanOnWork){digitalWrite(F1, true);}
+            else{digitalWrite(F1, false);}
+            digitalWrite(Relay, false);
+            for(int i=0;i<MinDefreeze*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
+            if(DefrTrig==0){DefreezeFlag = true;}
+            else{
+                if(Evaporator_1<DefreezeTempTrig)
+                {DefreezeFlag = true;}}
+        }
         
-        //TODO if(defreze)
-        digitalWrite(F1, FanFlag);
-
-        //Relay controll
-        digitalWrite(Relay, RelayFlag);
-
-        vTaskDelay(5000/portTICK_PERIOD_MS);
-
     }
     
     vTaskDelete( NULL );
@@ -453,7 +475,10 @@ void Additional( void * parameter)
         if(Debug) Serial.println("Z1:" + String(Zone_1) + " Z2:" + String(Zone_2) + " E1:" + String(Evaporator_1) + " E2:"+String(Evaporator_2));
         
         //TODO Show Temp NOW or Target Temp
-        tempC = Zone_1;
+        if(TempIndValue==0){
+            tempC = Zone_1;
+            if(DefreezeFlag==1){tempC = TargetTemp;}
+        } else{tempC = TargetTemp; }
 
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
