@@ -61,6 +61,7 @@ extern int TempIndValue;
 extern int TempIndValueDefr;
 extern int DefrTrig;
 
+
 // Var.
 
 
@@ -163,6 +164,8 @@ void switcherCallback(Control *sender, int value) {
     if(SwitchId2==id){LockFlag = true;}
     if(SwitchId3==id){DefreezeFlag = true;}
     if(SwitchIdM==id){ManualMode = true;}
+    if(SwitchIdCW==id){FanOnWork = true;}
+    if(SwitchIdDFW){FanOnDefr = true;}
     break;
 
   case S_INACTIVE:
@@ -173,6 +176,8 @@ void switcherCallback(Control *sender, int value) {
     if(SwitchId2==id){LockFlag = false;}
     if(SwitchId3==id){DefreezeFlag = false;}
     if(SwitchIdM==id){ManualMode = false;}
+    if(SwitchIdCW==id){FanOnWork = false;}
+    if(SwitchIdDFW){FanOnDefr = false;}
     break;
   }
 }
@@ -181,26 +186,34 @@ void selectCallback( Control* sender, int value ) {
   int id = int(sender->id);
   int data = (sender->value).toInt();
 
-  if(id==select0){TempSensorLocation_0 = data;}
-  if(id==select1){TempSensorLocation_1 = data;}
-  if(id==select2){TempSensorLocation_2 = data;}
-  if(id==select3){TempSensorLocation_3 = data;}
-  if(id==select4){TempSensorLocation_4 = data;}
-
-  if(id==select5){DisplayUIFlag = data;}
+  if(select0==id){TempSensorLocation_0 = data;}
+  if(select1==id){TempSensorLocation_1 = data;}
+  if(select2==id){TempSensorLocation_2 = data;}
+  if(select3==id){TempSensorLocation_3 = data;}
+  if(select4==id){TempSensorLocation_4 = data;}
+  if(select6==id){TempIndValue= data;}
+  if(select9==id){TempIndValueDefr= data;}
+  if(select10==id){DefrTrig= data;}
+  if(select5==id){DisplayUIFlag = data;}
 }
 
 void numberCall( Control* sender, int type ) {
   int id = int(sender->id);
     
-  if(id==NumberIdTW){DefrostWorkTime = (sender->value).toInt();}
-  if(id==NumberIdTD){MinDefreeze = (sender->value).toInt();}
-  if(id==NumberIdC0){CalibTemp_0 = (sender->value).toDouble();}
-  if(id==NumberIdC1){CalibTemp_1 = (sender->value).toDouble();}
-  if(id==NumberIdC2){CalibTemp_2 = (sender->value).toDouble();}
-  if(id==NumberIdC3){CalibTemp_3 = (sender->value).toDouble();}
-  if(id==NumberIdC4){CalibTemp_4 = (sender->value).toDouble();}
-  if(id==NumberIdN){numberOfDevices = (sender->value).toInt();}
+  if(NumberIdTW==id){DefrostWorkTime = (sender->value).toInt();}
+  if(NumberIdTD==id){MinDefreeze = (sender->value).toInt();}
+  if(NumberIdC0==id){CalibTemp_0 = (sender->value).toDouble();}
+  if(NumberIdC1==id){CalibTemp_1 = (sender->value).toDouble();}
+  if(NumberIdC2==id){CalibTemp_2 = (sender->value).toDouble();}
+  if(NumberIdC3==id){CalibTemp_3 = (sender->value).toDouble();}
+  if(NumberIdC4==id){CalibTemp_4 = (sender->value).toDouble();}
+  if(NumberIdN==id){numberOfDevices = (sender->value).toInt();}
+  if(NumberIdTDS==id){DefreezeTempTrig = (sender->value).toInt();}
+  if(NumberIdDiff==id){SPdiff= (sender->value).toInt();}
+  if(NumberIdMin==id){SPmin= (sender->value).toInt();}
+  if(NumberIdMax==id){SPmax= (sender->value).toInt();}
+  if(NumberIdDW==id){OnDelay= (sender->value).toInt();}
+  if(NumberIdDB==id){BetweenDelay= (sender->value).toInt();}
 
 }
 
@@ -210,7 +223,7 @@ void WebServer( void * parameter)
 
     /*    #1 GUI oled control       #2 Buttons control    */
 
-      ESPUI.setVerbosity(Verbosity::VerboseJSON);
+      ESPUI.setVerbosity(Verbosity::Quiet);
 
 #if defined(ESP32)
   WiFi.setHostname(hostname);

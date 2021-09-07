@@ -10,13 +10,16 @@
 #include <server.h>
 
 SemaphoreHandle_t i2c_line;
+extern bool DataReady;
 
 void setup() {
   // Code here, to run once:
   Serial.begin(115200); //UART setup
 
   i2c_line = xSemaphoreCreateMutex();
+
   xTaskCreate(Storage, "Storage", 5000, NULL, 2, NULL);
+    while (!DataReady) {vTaskDelay(100/portTICK_PERIOD_MS);}
   xTaskCreatePinnedToCore(Sensors, "Sensors", 5000, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(ClockRTC, "ClockRTC", 5000, NULL, 1, NULL, 1);
   xTaskCreate(Light, "Light", 5000, NULL, 1, NULL);
