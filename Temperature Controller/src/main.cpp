@@ -27,6 +27,7 @@ void setup() {
   xTaskCreate(Defreeze, "Defreeze", 5000, NULL, 1, NULL);
   xTaskCreate(Additional, "Additional", 5000, NULL, 1, NULL);
   xTaskCreate(Check, "Check", 5000, NULL, 1, NULL);
+  xTaskCreate(Buttons, "Buttons", 5000, NULL, 2, NULL);
   xTaskCreatePinnedToCore(GUI, "GUI", 5000, NULL, 1, NULL, 1);
   xTaskCreate(WebServer, "WebServer", 5000, NULL, 1, NULL);
 

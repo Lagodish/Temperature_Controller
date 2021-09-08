@@ -2,5 +2,6 @@
 #define GUI_H
 
 void GUI( void * parameter);
+void Buttons( void * parameter);
 
 #endif

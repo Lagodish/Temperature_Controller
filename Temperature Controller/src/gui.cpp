@@ -1,18 +1,22 @@
 #include <Arduino.h> 
 #include "Wire.h"
 #include "SH1106.h"
+#include <pins_define.h>
 // Include the UI lib
 #include "OLEDDisplayUi.h"
-
 // Include custom images
 #include "GUI/images.h"
 #include "GUI/font.h"
 #include "GUI/iconset.h"
 
+
 // Extern var.
-extern double tempC;
+extern double Zone_1;
+extern double TargetTemp;
 extern int contrast;
 extern int DisplayUIFlag;
+extern uint8_t HourNow;
+extern uint8_t MinNow;
 extern bool FanFlag;
 extern bool RelayFlag;
 extern bool CompressorFlag;
@@ -21,21 +25,21 @@ extern bool LockFlag;
 extern bool Debug;
 extern bool TenthsFlag;
 extern bool DefreezeFlag;
-extern uint8_t HourNow;
-extern uint8_t MinNow;
 extern bool Warning;
+extern int SPmin;
+extern int SPmax;
+extern int TempIndValue;
+
+// Var.
+double TempDisplay = 0;
 
 // Extern.
 extern SemaphoreHandle_t i2c_line;
 
-//Var.
-
-
 // Initialize the OLED display using Wire library
 SH1106Wire display(0x3c, 21, 22, GEOMETRY_128_64, I2C_ONE, 400000); //set I2C frequency to 400kHz
-//SH1106Wire display(0x3c, 21, 22);
 
-OLEDDisplayUi ui     ( &display );
+OLEDDisplayUi ui     (&display);
 
 void msOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
   //display->setTextAlignment(TEXT_ALIGN_LEFT);
@@ -56,8 +60,8 @@ void msOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
 
 void Frame_1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
 
-  int IntegerPart = (int)(tempC);
-  int DecimalPart = 10 * abs(tempC - IntegerPart);
+  int IntegerPart = (int)(TempDisplay);
+  int DecimalPart = 10 * abs(TempDisplay - IntegerPart);
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(DSEG7_Classic_Regular_50);
@@ -87,8 +91,8 @@ void Frame_1(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t
 
 void Frame_2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
 
-  int IntegerPart = (int)(tempC);
-  int DecimalPart = 10 * abs(tempC - IntegerPart);
+  int IntegerPart = (int)(TempDisplay);
+  int DecimalPart = 10 * abs(TempDisplay - IntegerPart);
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(DSEG7_Classic_Regular_50);
@@ -111,8 +115,8 @@ void Frame_2(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t
 
 void Frame_3(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
 
-  int IntegerPart = (int)(tempC);
-  int DecimalPart = 10 * abs(tempC - IntegerPart);
+  int IntegerPart = (int)(TempDisplay);
+  int DecimalPart = 10 * abs(TempDisplay - IntegerPart);
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(DSEG7_Classic_Regular_50);
@@ -144,7 +148,6 @@ void Frame_0(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t
 
 }
 
-//TODO WiFi Frame and set mode and normal mode!
 FrameCallback frames[] = {Frame_3, Frame_2, Frame_1, Frame_0};
 
 int frameCount = 4;
@@ -157,14 +160,14 @@ void GUI( void * parameter)
 
     /*    #1 GUI oled control       #2 Buttons control    */
     xSemaphoreTake(i2c_line, portMAX_DELAY);
-    ui.setTargetFPS(1);
+    ui.setTargetFPS(5);
 
     ui.disableAutoTransition();
     ui.disableAllIndicators();
 
     ui.setFrames(frames, frameCount);
     ui.setOverlays(overlays, overlaysCount);
-    //ui.setFrameAnimation(SLIDE_LEFT);
+
     ui.switchToFrame(DisplayUIFlag);
     ui.init();
     //display.flipScreenVertically();
@@ -181,10 +184,104 @@ void GUI( void * parameter)
         if(switchToFrameFlag != DisplayUIFlag){switchToFrameFlag = DisplayUIFlag; ui.switchToFrame(DisplayUIFlag);}
         if(oldData!=contrast){oldData=contrast; display.setBrightness(contrast);}
         xSemaphoreGive(i2c_line);
+
+        if(TempIndValue==0){
+          TempDisplay = Zone_1;
+          if(DefreezeFlag==1){TempDisplay = TargetTemp;}
+        } else{TempDisplay = TargetTemp; }
+
         if (remainingTimeBudget > 0){
           vTaskDelay(remainingTimeBudget/portTICK_PERIOD_MS);}
         
     }
+    
+    vTaskDelete( NULL );
+}
+
+
+SemaphoreHandle_t btnSemaphore;
+#define TM_BUTTON 100
+
+void IRAM_ATTR ISR_btn(){
+// Прерывание по кнопке, отпускаем семафор  
+   xSemaphoreGiveFromISR( btnSemaphore, NULL );
+}
+
+void Buttons( void * parameter)
+{
+
+  bool isISR     = true;
+  bool state_btn1 = true, state_btn2 = true, state_btn3 = true, state_btn4 = true;
+// Определяем режим работы GPIO с кнопкой   
+  pinMode(PIN_BUTTON1,INPUT_PULLUP);
+  pinMode(PIN_BUTTON2,INPUT_PULLDOWN);
+  pinMode(PIN_BUTTON3,INPUT_PULLUP);
+  pinMode(PIN_BUTTON4,INPUT_PULLUP);
+    // Создаем семафор     
+  btnSemaphore = xSemaphoreCreateBinary();
+    // Сразу "берем" семафор чтобы не было первого ложного срабатывания кнопки   
+  xSemaphoreTake( btnSemaphore, 100 );
+    // Запускаем обработчик прерывания (кнопка замыкает GPIO на землю) на все кнопки
+  attachInterrupt(PIN_BUTTON1, ISR_btn, FALLING);   
+  attachInterrupt(PIN_BUTTON2, ISR_btn, RISING);   
+  attachInterrupt(PIN_BUTTON3, ISR_btn, FALLING);   
+  attachInterrupt(PIN_BUTTON4, ISR_btn, FALLING);   
+  while(true){
+              // Обработчик прерывания выключен, функция ждет окончания действия с кнопкой     
+    if( isISR ){
+              // Ждем "отпускание" семафора
+        xSemaphoreTake( btnSemaphore, portMAX_DELAY );
+              // Отключаем прерывания по всем кнопкам
+        detachInterrupt(PIN_BUTTON1);
+        detachInterrupt(PIN_BUTTON2);
+        detachInterrupt(PIN_BUTTON3);
+        detachInterrupt(PIN_BUTTON4);
+              // переводим задачу в цикл обработки кнопки
+        isISR = false;   
+      }
+      else {
+         bool st1 = digitalRead(PIN_BUTTON1);
+         bool st2 = digitalRead(PIN_BUTTON2);
+         bool st3 = digitalRead(PIN_BUTTON3);
+         bool st4 = digitalRead(PIN_BUTTON4);
+              // Проверка изменения состояния кнопки1      
+         if( st1 != state_btn1 ){
+            state_btn1 = st1;
+            if( st1 == LOW ){ Serial.println("Button1 pressed"); }
+            else { Serial.println("Button1 released"); }
+         }        
+              // Проверка изменения состояния кнопки2      
+         if( st2 != state_btn2 ){
+            state_btn2 = st2;
+            if( st2 == HIGH ){ Serial.println("Button2 pressed"); 
+            if((TargetTemp+0.1)<double(SPmax)){TargetTemp = TargetTemp+0.5;}}
+            else { Serial.println("Button2 released"); }
+         }        
+              // Проверка изменения состояния кнопки3      
+         if( st3 != state_btn3 ){
+            state_btn3 = st3;
+            if( st3 == LOW ){ Serial.println("Button3 pressed"); 
+            }
+            else { Serial.println("Button3 released"); }
+         }   
+              // Проверка изменения состояния кнопки4      
+         if( st4 != state_btn4 ){
+            state_btn4 = st4;
+            if( st4 == LOW ){ Serial.println("Button4 pressed");
+            if((TargetTemp-0.1)>double(SPmin)){TargetTemp = TargetTemp-0.5;}}
+            else { Serial.println("Button4 released"); }
+         }   
+            // Проверка что все кнопки отработали
+         if( st1 == HIGH && st2 == LOW  && st3 == HIGH && st3 == HIGH ){ 
+            attachInterrupt(PIN_BUTTON1, ISR_btn, FALLING);   
+            attachInterrupt(PIN_BUTTON2, ISR_btn, RISING);   
+            attachInterrupt(PIN_BUTTON3, ISR_btn, FALLING);   
+            attachInterrupt(PIN_BUTTON4, ISR_btn, FALLING);   
+            isISR = true;
+         }
+         vTaskDelay(100);
+      }
+   }
     
     vTaskDelete( NULL );
 }

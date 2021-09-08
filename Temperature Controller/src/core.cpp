@@ -6,10 +6,11 @@
 #include <pins_define.h>
 
 // Var.
-double tempC = 0.0;
+String WiFi_AP_Pass = "";
+String WiFi_STA_Name = "";
+String WiFi_STA_Pass = "";
 
 double TargetTemp = 0.0;
-
 double TempSensor_0 = 0.0;
 double TempSensor_1 = 0.0;
 double TempSensor_2 = 0.0;
@@ -20,7 +21,6 @@ double CalibTemp_1 = 0.0;
 double CalibTemp_2 = 0.0;
 double CalibTemp_3 = 0.0;
 double CalibTemp_4 = 0.0;
-
 double Zone_1 = 0.0;
 double Evaporator_1 = 0.0;
 double Zone_2 = 0.0;
@@ -31,7 +31,6 @@ int TempSensorLocation_1 = 0;
 int TempSensorLocation_2 = 0;
 int TempSensorLocation_3 = 0;
 int TempSensorLocation_4 = 0;
-
 int SPdiff = 0;
 int SPmin = 0;
 int SPmax = 0;
@@ -40,20 +39,19 @@ int BetweenDelay = 0;
 int TempIndValue = 0;
 int TempIndValueDefr = 0;
 int DefrTrig = 0;
-
 int contrast = 0;
 int numberOfDevices = 0;
 int DefrostWorkTime = 0;
 int MinDefreeze = 0;
 int DefreezeTempTrig = 0;
 int DisplayUIFlag = 0;
+int warnCount = 0;
 uint8_t R_brightness = 0;
 uint8_t G_brightness = 0;
 uint8_t B_brightness = 0;
 uint8_t W_brightness = 0;
 uint8_t HourNow = 0;
 uint8_t MinNow = 0;
-int warnCount = 0;
 
 bool FanFlag = false;
 bool DefreezeFlag = false;
@@ -90,6 +88,9 @@ void Storage( void * parameter)
     /*    #1 Get data from flash storage    */
 
     preferences.begin("data-space", false);
+    WiFi_AP_Pass = preferences.getString("WiFiPass", "12345678");
+    WiFi_STA_Name = preferences.getString("WiFi_Name", "WiFi name");
+    WiFi_STA_Pass = preferences.getString("WiFi_Pass", "Password");
     
     CalibTemp_0 = preferences.getDouble("CalTemp0", 0.0);
     CalibTemp_1 = preferences.getDouble("CalTemp1", 0.0);
@@ -258,7 +259,7 @@ void Storage( void * parameter)
 
     }
 
-    vTaskDelete( NULL );
+    vTaskDelete(NULL);
 }
 
 void Light( void * parameter)
@@ -293,7 +294,7 @@ void Light( void * parameter)
         vTaskDelay(5000/portTICK_PERIOD_MS);
     }
 
-    vTaskDelete( NULL );
+    vTaskDelete(NULL);
 }
 
 void Operate( void * parameter)
@@ -306,23 +307,24 @@ void Operate( void * parameter)
     while(Zone_1==0.0){vTaskDelay(500/portTICK_PERIOD_MS);}
 
     while(1){
-    
-        if(DefreezeFlag){CompressorFlag=false;}
+        if(ManualMode){vTaskDelay(5000/portTICK_PERIOD_MS);}
         else{
-            if((TargetTemp+double(SPdiff)/2)<Zone_1) {CompressorFlag=true;}
-            if((TargetTemp-double(SPdiff)/2)>Zone_1) {CompressorFlag=false;}
+            if(DefreezeFlag){CompressorFlag=false;}
+            else{
+                if((TargetTemp+double(SPdiff)/2)<Zone_1) {CompressorFlag=true;}
+                if((TargetTemp-double(SPdiff)/2)>Zone_1) {CompressorFlag=false;}
+            }
+
+            digitalWrite(Comp, CompressorFlag);
+
+            for(int i=0;i<BetweenDelay*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
         }
-
-        digitalWrite(Comp, CompressorFlag);
-
-        for(int i=0;i<BetweenDelay*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
-
     }
 
-    vTaskDelete( NULL );
+    vTaskDelete(NULL);
 }
 
-void Defreeze( void * parameter)
+void Defreeze(void * parameter)
 {
     if(Debug) Serial.println("Defreeze task start!");
 
@@ -334,29 +336,38 @@ void Defreeze( void * parameter)
     
     while(1){
     
-
-        if(DefreezeFlag){
-            digitalWrite(Comp, false);
-            if(FanOnDefr){digitalWrite(F1, true);}
-            else{digitalWrite(F1, false);}
-            digitalWrite(Relay, true);
-            for(int i=0;i<DefrostWorkTime*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
-            DefreezeFlag = false;
-        }
+        if(ManualMode){vTaskDelay(5000/portTICK_PERIOD_MS);}
         else{
-            if(FanOnWork){digitalWrite(F1, true);}
-            else{digitalWrite(F1, false);}
-            digitalWrite(Relay, false);
-            for(int i=0;i<MinDefreeze*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
-            if(DefrTrig==0){DefreezeFlag = true;}
-            else{
-                if(Evaporator_1<DefreezeTempTrig)
-                {DefreezeFlag = true;}}
+
+            if(DefreezeFlag){
+                digitalWrite(Comp, false);
+                CompressorFlag=false;
+
+                if(FanOnDefr){digitalWrite(F1, true);}
+                else{digitalWrite(F1, false);}
+                
+                digitalWrite(Relay, true);
+
+                for(int i=0;i<DefrostWorkTime*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
+                DefreezeFlag = false;
+            }
+           else{
+                if(FanOnWork){digitalWrite(F1, true);}
+                else{digitalWrite(F1, false);}
+
+                digitalWrite(Relay, false);
+
+                for(int i=0;i<MinDefreeze*12;i++){vTaskDelay(5000/portTICK_PERIOD_MS);}
+            
+                if(DefrTrig==0){DefreezeFlag = true;}
+                else{
+                    if(Evaporator_1<DefreezeTempTrig)
+                    {DefreezeFlag = true;}}
         }
-        
+    }
     }
     
-    vTaskDelete( NULL );
+    vTaskDelete(NULL);
 }
 
 void Sensors( void * parameter)
@@ -366,63 +377,65 @@ void Sensors( void * parameter)
     /*    #1 Open door switch get data    #2 Temp sersor(s) ds18b20 get data    */
 
     sensors.begin();
-    vTaskDelay(800/portTICK_PERIOD_MS);
-    //Serial.println(sensors.getDS18Count());
     sensors.setResolution(12);
     
     while(1){
-        sensors.requestTemperatures(); // Send the command to get temperatures
-        // Loop through each device, print out temperature data
+        sensors.requestTemperatures();
         vTaskDelay(800/portTICK_PERIOD_MS);
+
         for(int i=0;i<numberOfDevices; i++){
-            // Search the wire for address
             float dataRes = double(sensors.getTempCByIndex(i));
             if(dataRes==DEVICE_DISCONNECTED_C||dataRes==DEVICE_DISCONNECTED_RAW||(dataRes==85)){
             warnCount++;
-
-            if(Debug){
-                Serial.print(i);
-                Serial.print("# WARNING! DS18B20 - ");
-                Serial.println(dataRes);
-            }
+                if(Debug){
+                    Serial.print(i);
+                    Serial.print("# WARNING! DS18B20 - ");
+                    Serial.println(dataRes);}
             }else{
-
-                    if(i==0) TempSensor_0 = dataRes;
-                    if(i==1) TempSensor_1 = dataRes;
-                    if(i==2) TempSensor_2 = dataRes;
-                    if(i==3) TempSensor_3 = dataRes;
-                    if(i==4) TempSensor_4 = dataRes;       
+                if(i==0) TempSensor_0 = dataRes;
+                if(i==1) TempSensor_1 = dataRes;
+                if(i==2) TempSensor_2 = dataRes;
+                if(i==3) TempSensor_3 = dataRes;
+                if(i==4) TempSensor_4 = dataRes;       
             }
         }
         vTaskDelay(10000/portTICK_PERIOD_MS);
     }
 
-    vTaskDelete( NULL );
+    vTaskDelete(NULL);
 }
 
-void Check( void * parameter)
+void Check(void * parameter)
 {
     if(Debug) Serial.println("Check task start!");
 
     /*    #1 Additional tasks    */
     vTaskDelay(3000);
     while(1){
-        if(Warning)
-            Serial.println("######### WARNING #########");
-        
-        if(warnCount>4)
+    
+        if(ManualMode){
+            digitalWrite(Comp, CompressorFlag);
+            digitalWrite(Relay, RelayFlag);
+            digitalWrite(F1, FanFlag);
             Warning = true;
-        else
-        warnCount = 0;
+            vTaskDelay(5000/portTICK_PERIOD_MS);}
+        else{
+            if(Warning)
+                Serial.println("######### WARNING #########");
+            
+            if(warnCount>4)
+                Warning = true;
+            else
+            warnCount = 0;
 
-        vTaskDelay(30000/portTICK_PERIOD_MS);
-
+            vTaskDelay(30000/portTICK_PERIOD_MS);
+        }
     }
     
-    vTaskDelete( NULL );
+    vTaskDelete(NULL);
 }
 
-void Additional( void * parameter)
+void Additional(void * parameter)
 {
     if(Debug) Serial.println("Additional task start!");
 
@@ -474,20 +487,14 @@ void Additional( void * parameter)
 
         if(Debug) Serial.println("Z1:" + String(Zone_1) + " Z2:" + String(Zone_2) + " E1:" + String(Evaporator_1) + " E2:"+String(Evaporator_2));
         
-        //TODO Show Temp NOW or Target Temp
-        if(TempIndValue==0){
-            tempC = Zone_1;
-            if(DefreezeFlag==1){tempC = TargetTemp;}
-        } else{tempC = TargetTemp; }
-
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
     
-    vTaskDelete( NULL );
+    vTaskDelete(NULL);
 }
 
-void ClockRTC( void * parameter)
+void ClockRTC(void * parameter)
 {
     if(Debug) Serial.println("ClockRTC task start!");
 
@@ -517,5 +524,5 @@ void ClockRTC( void * parameter)
         vTaskDelay(5000/portTICK_PERIOD_MS);
     }
     
-    vTaskDelete( NULL );
+    vTaskDelete(NULL);
 }

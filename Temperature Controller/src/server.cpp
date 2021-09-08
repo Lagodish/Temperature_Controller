@@ -238,10 +238,15 @@ void WebServer( void * parameter)
     if (WiFi.status() != WL_CONNECTED) {
       Serial.println("\n\nSmart Temperature Controller");
       Serial.print("Loading");
+          /*
+          String str = "This is my string"; 
+          int str_len = str.length() + 1; 
+          char char_array[str_len];
+          str.toCharArray(char_array, str_len); */ //TODO
 
       WiFi.mode(WIFI_AP);
       WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-      WiFi.softAP(ssid, password);
+      WiFi.softAP(ssid, password, 5, 0, 1);
 
       int timeout = 5;
 
