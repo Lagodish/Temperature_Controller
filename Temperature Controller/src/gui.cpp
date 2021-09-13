@@ -21,6 +21,7 @@ extern bool FanFlag;
 extern bool RelayFlag;
 extern bool CompressorFlag;
 extern bool LightFlag;
+extern bool PowerOnFlag;
 extern bool LockFlag;
 extern bool Debug;
 extern bool TenthsFlag;
@@ -166,7 +167,7 @@ void GUI( void * parameter)
     ui.disableAllIndicators();
 
     ui.setFrames(frames, frameCount);
-    ui.setOverlays(overlays, overlaysCount);
+    //ui.setOverlays(overlays, overlaysCount);
 
     ui.switchToFrame(DisplayUIFlag);
     ui.init();
@@ -198,90 +199,52 @@ void GUI( void * parameter)
     vTaskDelete( NULL );
 }
 
-
-SemaphoreHandle_t btnSemaphore;
-#define TM_BUTTON 100
-
-void IRAM_ATTR ISR_btn(){
-// Прерывание по кнопке, отпускаем семафор  
-   xSemaphoreGiveFromISR( btnSemaphore, NULL );
-}
-
 void Buttons( void * parameter)
 {
 
-  bool isISR     = true;
-  bool state_btn1 = true, state_btn2 = true, state_btn3 = true, state_btn4 = true;
-// Определяем режим работы GPIO с кнопкой   
-  pinMode(PIN_BUTTON1,INPUT_PULLUP);
-  pinMode(PIN_BUTTON2,INPUT_PULLDOWN);
-  pinMode(PIN_BUTTON3,INPUT_PULLUP);
-  pinMode(PIN_BUTTON4,INPUT_PULLUP);
-    // Создаем семафор     
-  btnSemaphore = xSemaphoreCreateBinary();
-    // Сразу "берем" семафор чтобы не было первого ложного срабатывания кнопки   
-  xSemaphoreTake( btnSemaphore, 100 );
-    // Запускаем обработчик прерывания (кнопка замыкает GPIO на землю) на все кнопки
-  attachInterrupt(PIN_BUTTON1, ISR_btn, FALLING);   
-  attachInterrupt(PIN_BUTTON2, ISR_btn, RISING);   
-  attachInterrupt(PIN_BUTTON3, ISR_btn, FALLING);   
-  attachInterrupt(PIN_BUTTON4, ISR_btn, FALLING);   
+  bool state_btn1 = false, state_btn2 = false, state_btn3 = false, state_btn4 = false;
+
+  pinMode(PIN_BUTTON1,INPUT);
+  pinMode(PIN_BUTTON2,INPUT);
+  pinMode(PIN_BUTTON3,INPUT);
+  pinMode(PIN_BUTTON4,INPUT);
+ 
   while(true){
-              // Обработчик прерывания выключен, функция ждет окончания действия с кнопкой     
-    if( isISR ){
-              // Ждем "отпускание" семафора
-        xSemaphoreTake( btnSemaphore, portMAX_DELAY );
-              // Отключаем прерывания по всем кнопкам
-        detachInterrupt(PIN_BUTTON1);
-        detachInterrupt(PIN_BUTTON2);
-        detachInterrupt(PIN_BUTTON3);
-        detachInterrupt(PIN_BUTTON4);
-              // переводим задачу в цикл обработки кнопки
-        isISR = false;   
-      }
-      else {
+
          bool st1 = digitalRead(PIN_BUTTON1);
          bool st2 = digitalRead(PIN_BUTTON2);
          bool st3 = digitalRead(PIN_BUTTON3);
          bool st4 = digitalRead(PIN_BUTTON4);
-              // Проверка изменения состояния кнопки1      
-         if( st1 != state_btn1 ){
+ 
+         if( st1 != state_btn1 ){     //Minus Button pressed
             state_btn1 = st1;
-            if( st1 == LOW ){ Serial.println("Button1 pressed"); }
-            else { Serial.println("Button1 released"); }
-         }        
-              // Проверка изменения состояния кнопки2      
-         if( st2 != state_btn2 ){
-            state_btn2 = st2;
-            if( st2 == HIGH ){ Serial.println("Button2 pressed"); 
-            if((TargetTemp+0.1)<double(SPmax)){TargetTemp = TargetTemp+0.5;}}
-            else { Serial.println("Button2 released"); }
-         }        
-              // Проверка изменения состояния кнопки3      
-         if( st3 != state_btn3 ){
-            state_btn3 = st3;
-            if( st3 == LOW ){ Serial.println("Button3 pressed"); 
+            if( st1 == HIGH ){ 
+              TempIndValue=1;
+              if((TargetTemp-0.1)>double(SPmin)){TargetTemp = TargetTemp-0.5;}
             }
-            else { Serial.println("Button3 released"); }
+         }        
+              
+         if( st2 != state_btn2 ){   //Power Button pressed
+            state_btn2 = st2;
+            if( st2 == HIGH ){PowerOnFlag = !PowerOnFlag;}
+         }        
+              
+         if( st3 != state_btn3 ){     //Plus Button pressed
+            state_btn3 = st3;
+            if( st3 == HIGH ){
+              TempIndValue=1;
+              if((TargetTemp+0.1)<double(SPmax)){TargetTemp = TargetTemp+0.5;}
+            }
          }   
-              // Проверка изменения состояния кнопки4      
-         if( st4 != state_btn4 ){
+              
+         if( st4 != state_btn4 ){  // Light Button pressed
             state_btn4 = st4;
-            if( st4 == LOW ){ Serial.println("Button4 pressed");
-            if((TargetTemp-0.1)>double(SPmin)){TargetTemp = TargetTemp-0.5;}}
-            else { Serial.println("Button4 released"); }
-         }   
-            // Проверка что все кнопки отработали
-         if( st1 == HIGH && st2 == LOW  && st3 == HIGH && st3 == HIGH ){ 
-            attachInterrupt(PIN_BUTTON1, ISR_btn, FALLING);   
-            attachInterrupt(PIN_BUTTON2, ISR_btn, RISING);   
-            attachInterrupt(PIN_BUTTON3, ISR_btn, FALLING);   
-            attachInterrupt(PIN_BUTTON4, ISR_btn, FALLING);   
-            isISR = true;
+            if( st4 == HIGH ){ LightFlag = !LightFlag;}
          }
+
          vTaskDelay(100);
       }
-   }
+   
     
     vTaskDelete( NULL );
 }

@@ -63,6 +63,8 @@ bool TenthsFlag = true;
 bool FanOnWork = true;
 bool FanOnDefr = false;
 
+bool PowerOnFlag = true;
+
 bool Warning = false;
 bool Debug = false;
 bool ChangesToSaveFlag = false; //TODO Logic use!
@@ -115,6 +117,7 @@ void Storage( void * parameter)
     TargetTemp = preferences.getDouble("TargetTemp", 10.0f);
     FanOnWork = preferences.getBool("FanOnWork", true);
     FanOnDefr = preferences.getBool("FanOnDefr", false);
+    LightFlag = preferences.getBool("LightFlag", true);
     SPdiff = preferences.getInt("SPdiff", 2);
     SPmin = preferences.getInt("SPmin", 5);
     SPmax = preferences.getInt("SPmax", 18);
@@ -156,6 +159,7 @@ void Storage( void * parameter)
     bool TenthsFlag_old = TenthsFlag;
     bool FanOnWork_old=FanOnWork;
     bool FanOnDefr_old=FanOnDefr;
+    bool LightFlag_old=LightFlag;
     int SPdiff_old=SPdiff;
     int SPmin_old=SPmin;
     int SPmax_old=SPmax;
@@ -175,7 +179,7 @@ void Storage( void * parameter)
         (B_brightness_Old != B_brightness)||(W_brightness_Old != W_brightness)||(DefrostWorkTime_Old != DefrostWorkTime)||(MinDefreeze_Old != MinDefreeze)||
         (abs(TargetTemp_Old-TargetTemp)>0.1)||(abs(CalibTemp_0_Old - CalibTemp_0)>0.01)||(TenthsFlag_old != TenthsFlag)||(DisplayUIFlag_old != DisplayUIFlag)||
         (abs(CalibTemp_1_Old - CalibTemp_1)>0.01)||(abs(CalibTemp_2_Old - CalibTemp_2)>0.01)||(abs(CalibTemp_3_Old - CalibTemp_3)>0.01)||(DefreezeTempTrig_Old != DefreezeTempTrig)||
-        (abs(CalibTemp_4_Old - CalibTemp_4)>0.01)||(TempSensorLocation_0_Old != TempSensorLocation_0)||(TempSensorLocation_1_Old != TempSensorLocation_1)||
+        (abs(CalibTemp_4_Old - CalibTemp_4)>0.01)||(TempSensorLocation_0_Old != TempSensorLocation_0)||(TempSensorLocation_1_Old != TempSensorLocation_1)||(LightFlag_old!=LightFlag)||
         (LockFlag_Old != LockFlag)||(TenthsFlag_old != TenthsFlag)||(FanOnWork_old!=FanOnWork)||(FanOnDefr_old!=FanOnDefr)||(SPdiff_old!=SPdiff)||(SPmin_old!=SPmin)||
         (SPmax_old!=SPmax)||(OnDelay_old!=OnDelay)||(BetweenDelay_old!=BetweenDelay)||(TempIndValue_old!=TempIndValue)||(TempIndValueDefr_old!=TempIndValueDefr)||(DefrTrig_old!=DefrTrig)||
         (TempSensorLocation_2_Old != TempSensorLocation_2)||(TempSensorLocation_3_Old != TempSensorLocation_3)||(TempSensorLocation_4_Old != TempSensorLocation_4)){
@@ -214,6 +218,7 @@ void Storage( void * parameter)
             TempIndValueDefr_old=TempIndValueDefr;
             DefrTrig_old=DefrTrig;
             DefreezeTempTrig_Old = DefreezeTempTrig; 
+            LightFlag_old=LightFlag;
                 
             preferences.begin("data-space", false);
             
@@ -240,6 +245,7 @@ void Storage( void * parameter)
             preferences.putBool("TenthsFlag", TenthsFlag);
             preferences.putBool("FanOnWork", FanOnWork);
             preferences.putBool("FanOnDefr", FanOnDefr);
+            preferences.putBool("LightFlag", LightFlag);
             preferences.putInt("SPdiff", SPdiff);
             preferences.putInt("SPmin", SPmin);
             preferences.putInt("SPmax", SPmax);
@@ -283,15 +289,20 @@ void Light( void * parameter)
 
     while(1){
 
-        if((R_brightness==0)&&(G_brightness==0)&&(B_brightness==0)&&(W_brightness==0)){LightFlag = false;}
-        else{LightFlag = true;}
-        
+        //if((R_brightness==0)&&(G_brightness==0)&&(B_brightness==0)&&(W_brightness==0)){LightFlag = false;}
+        //else{LightFlag = true;}
+        if(LightFlag){
         ledcWrite(1, R_brightness);
         ledcWrite(2, G_brightness);
         ledcWrite(3, B_brightness);
-        ledcWrite(4, W_brightness);
+        ledcWrite(4, W_brightness);}
+        else{
+        ledcWrite(1, 0);
+        ledcWrite(2, 0);
+        ledcWrite(3, 0);
+        ledcWrite(4, 0);}
 
-        vTaskDelay(5000/portTICK_PERIOD_MS);
+        vTaskDelay(500/portTICK_PERIOD_MS);
     }
 
     vTaskDelete(NULL);
@@ -486,7 +497,7 @@ void Additional(void * parameter)
         if(E2Count != 0) Evaporator_2 = TempEvaporator_2/E2Count;
 
         if(Debug) Serial.println("Z1:" + String(Zone_1) + " Z2:" + String(Zone_2) + " E1:" + String(Evaporator_1) + " E2:"+String(Evaporator_2));
-        
+        TempIndValue=0;
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
