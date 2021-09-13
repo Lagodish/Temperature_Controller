@@ -30,6 +30,7 @@ extern bool Warning;
 extern int SPmin;
 extern int SPmax;
 extern int TempIndValue;
+extern bool TempIndSet;
 
 // Var.
 double TempDisplay = 0;
@@ -178,15 +179,17 @@ void GUI( void * parameter)
     uint8_t oldData = contrast;
     int remainingTimeBudget = 0;
     int switchToFrameFlag = DisplayUIFlag;
+    bool power = true;
     
     while(1){
         xSemaphoreTake(i2c_line, portMAX_DELAY);
         remainingTimeBudget = ui.update();
         if(switchToFrameFlag != DisplayUIFlag){switchToFrameFlag = DisplayUIFlag; ui.switchToFrame(DisplayUIFlag);}
         if(oldData!=contrast){oldData=contrast; display.setBrightness(contrast);}
+        if(power!=PowerOnFlag){power=PowerOnFlag; if(PowerOnFlag){display.displayOn();}else{display.displayOff();}}
         xSemaphoreGive(i2c_line);
 
-        if(TempIndValue==0){
+        if((TempIndValue==0)&&(TempIndSet==false)){
           TempDisplay = Zone_1;
           if(DefreezeFlag==1){TempDisplay = TargetTemp;}
         } else{TempDisplay = TargetTemp; }
@@ -219,7 +222,7 @@ void Buttons( void * parameter)
          if( st1 != state_btn1 ){     //Minus Button pressed
             state_btn1 = st1;
             if( st1 == HIGH ){ 
-              TempIndValue=1;
+              TempIndSet=true;
               if((TargetTemp-0.1)>double(SPmin)){TargetTemp = TargetTemp-0.5;}
             }
          }        
@@ -232,7 +235,7 @@ void Buttons( void * parameter)
          if( st3 != state_btn3 ){     //Plus Button pressed
             state_btn3 = st3;
             if( st3 == HIGH ){
-              TempIndValue=1;
+              TempIndSet=true;
               if((TargetTemp+0.1)<double(SPmax)){TargetTemp = TargetTemp+0.5;}
             }
          }   

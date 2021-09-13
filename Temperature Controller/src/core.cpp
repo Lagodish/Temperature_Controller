@@ -62,6 +62,7 @@ bool LockFlag = false;
 bool TenthsFlag = true;
 bool FanOnWork = true;
 bool FanOnDefr = false;
+bool TempIndSet=false;
 
 bool PowerOnFlag = true;
 
@@ -291,7 +292,7 @@ void Light( void * parameter)
 
         //if((R_brightness==0)&&(G_brightness==0)&&(B_brightness==0)&&(W_brightness==0)){LightFlag = false;}
         //else{LightFlag = true;}
-        if(LightFlag){
+        if(LightFlag&&PowerOnFlag){
         ledcWrite(1, R_brightness);
         ledcWrite(2, G_brightness);
         ledcWrite(3, B_brightness);
@@ -318,7 +319,7 @@ void Operate( void * parameter)
     while(Zone_1==0.0){vTaskDelay(500/portTICK_PERIOD_MS);}
 
     while(1){
-        if(ManualMode){vTaskDelay(5000/portTICK_PERIOD_MS);}
+        if(ManualMode||!PowerOnFlag){digitalWrite(Comp, false); CompressorFlag=false; vTaskDelay(5000/portTICK_PERIOD_MS);}
         else{
             if(DefreezeFlag){CompressorFlag=false;}
             else{
@@ -347,7 +348,7 @@ void Defreeze(void * parameter)
     
     while(1){
     
-        if(ManualMode){vTaskDelay(5000/portTICK_PERIOD_MS);}
+        if(ManualMode||!PowerOnFlag){digitalWrite(F1, false); vTaskDelay(5000/portTICK_PERIOD_MS);}
         else{
 
             if(DefreezeFlag){
@@ -497,7 +498,7 @@ void Additional(void * parameter)
         if(E2Count != 0) Evaporator_2 = TempEvaporator_2/E2Count;
 
         if(Debug) Serial.println("Z1:" + String(Zone_1) + " Z2:" + String(Zone_2) + " E1:" + String(Evaporator_1) + " E2:"+String(Evaporator_2));
-        TempIndValue=0;
+        TempIndSet=false;
         vTaskDelay(5000/portTICK_PERIOD_MS);
 
     }
